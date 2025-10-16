@@ -47,6 +47,9 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     otherDetails = {}
   } = data || {};
 
+  // Check if it's an inter-state transaction
+  const isInterState = supplierData?.state !== buyerData?.state;
+
   // Safe calculation helper
   const safeCalculate = (value) => {
     const num = parseFloat(value);
@@ -237,8 +240,14 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <th style={forPDF ? pdfStyles.tableCell : {}}>Unit</th>
             <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
             <th style={forPDF ? pdfStyles.tableCell : {}}>Taxable Value</th>
-            <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">CGST</th>
-            <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">SGST</th>
+            {isInterState ? (
+              <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">IGST</th>
+            ) : (
+              <>
+                <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">CGST</th>
+                <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">SGST</th>
+              </>
+            )}
             <th style={forPDF ? pdfStyles.tableCell : {}}>Total</th>
           </tr>
           <tr className="sub-header-row">
@@ -249,10 +258,19 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <th style={forPDF ? pdfStyles.tableCell : {}}></th>
             <th style={forPDF ? pdfStyles.tableCell : {}}></th>
             <th style={forPDF ? pdfStyles.tableCell : {}}></th>
-            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
-            <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
-            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
-            <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+            {isInterState ? (
+              <>
+                <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+                <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+              </>
+            ) : (
+              <>
+                <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+                <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+                <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+                <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+              </>
+            )}
             <th style={forPDF ? pdfStyles.tableCell : {}}></th>
           </tr>
         </thead>
@@ -275,10 +293,19 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.unit}</td>
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{rate.toFixed(2)}</td>
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{amount.toFixed(2)}</td>
-                <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
-                <td style={forPDF ? pdfStyles.tableCell : {}}>{cgstAmount.toFixed(2)}</td>
-                <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
-                <td style={forPDF ? pdfStyles.tableCell : {}}>{sgstAmount.toFixed(2)}</td>
+                {isInterState ? (
+                  <>
+                    <td style={forPDF ? pdfStyles.tableCell : {}}>{gstRate.toFixed(1)}%</td>
+                    <td style={forPDF ? pdfStyles.tableCell : {}}>{gstAmount.toFixed(2)}</td>
+                  </>
+                ) : (
+                  <>
+                    <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
+                    <td style={forPDF ? pdfStyles.tableCell : {}}>{cgstAmount.toFixed(2)}</td>
+                    <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
+                    <td style={forPDF ? pdfStyles.tableCell : {}}>{sgstAmount.toFixed(2)}</td>
+                  </>
+                )}
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{(amount + gstAmount).toFixed(2)}</td>
               </tr>
             );
@@ -286,7 +313,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           <tr className="total-row">
             <td style={forPDF ? pdfStyles.tableCell : {}} colSpan="3">Total Quantity</td>
             <td style={forPDF ? pdfStyles.tableCell : {}}>{totalQuantity}</td>
-            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan="8"></td>
+            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan={isInterState ? "6" : "8"}></td>
           </tr>
         </tbody>
       </table>
@@ -303,19 +330,11 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <span>₹{subTotal.toFixed(2)}</span>
           </div>
           <div className="amount-item">
-            <span>Add: CGST:</span>
-            <span>₹{(totalGST / 2).toFixed(2)}</span>
-          </div>
-          <div className="amount-item">
-            <span>Add: SGST:</span>
-            <span>₹{(totalGST / 2).toFixed(2)}</span>
-          </div>
-          <div className="amount-item">
-            <span>Tax Amount: GST:</span>
+            <span>Tax Amount:</span>
             <span>₹{totalGST.toFixed(2)}</span>
           </div>
           <div className="amount-item total">
-            <span>Amount With Tax:</span>
+            <span>Total Amount With Tax:</span>
             <span>₹{grandTotal.toFixed(2)}</span>
           </div>
         </div>
