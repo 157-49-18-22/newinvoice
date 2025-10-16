@@ -13,21 +13,6 @@ const formatDate = (dateString) => {
 };
 
 const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false }, ref) => {
-  const {
-    invoiceNumber = '',
-    number = '',
-    date = new Date(),
-    products = [],
-    supplierData = {},
-    buyerData = {},
-    selectedBuyer = {},
-    transportData = {},
-    otherDetails = {}
-  } = data || {};
-
-  // Use selectedBuyer if buyerData is not available
-  const buyerInfo = buyerData && Object.keys(buyerData).length > 0 ? buyerData : selectedBuyer;
-
   // Debug logs
   console.log('InvoiceTemplate rendered with data:', data);
   console.log('InvoiceTemplate bank data:', bankData);
@@ -38,8 +23,6 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     console.log('Products in template:', data?.products?.length || 0);
     console.log('Supplier data:', data?.supplierData);
     console.log('Buyer data:', data?.buyerData);
-    console.log('Selected buyer:', data?.selectedBuyer);
-    console.log('Buyer info (final):', buyerInfo);
     
     // Validate that crucial data exists
     if (!data?.products || data.products.length === 0) {
@@ -48,10 +31,21 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     if (!data?.supplierData?.companyName) {
       console.warn('WARNING: No supplier company name');
     }
-    if (!buyerInfo?.companyName) {
+    if (!data?.buyerData?.companyName) {
       console.warn('WARNING: No buyer company name');
     }
-  }, [data, bankData, buyerInfo]);
+  }, [data, bankData]);
+
+  const {
+    invoiceNumber = '',
+    number = '',
+    date = new Date(),
+    products = [],
+    supplierData = {},
+    buyerData = {},
+    transportData = {},
+    otherDetails = {}
+  } = data || {};
 
   // Safe calculation helper
   const safeCalculate = (value) => {
@@ -72,8 +66,8 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
   // Additional styles for PDF rendering
   const pdfStyles = forPDF ? {
     wrapper: {
-      width: '210mm',
-      padding: '8mm',
+      width: '180mm',
+      padding: '5mm',
       backgroundColor: 'white',
       color: 'black',
       fontFamily: 'Arial, sans-serif',
@@ -82,7 +76,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     table: {
       width: '100%',
       tableLayout: 'fixed',
-      fontSize: '8pt'
+      fontSize: '7pt'
     },
     tableCell: {
       padding: '2px',
@@ -97,57 +91,169 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
 
   return (
     <div className="invoice-template" ref={ref} style={pdfStyles.wrapper}>
-      {/* Top Thank You OUTSIDE */}
-      <div className="thank-you-top">Thank-you for doing business with us</div>
-
-      <div className="page">
-        {/* Company Section */}
-        <div className="company-section">
+      {/* Company Header */}
+      <div className="company-header">
         <div className="company-logo">
           {supplierData?.logo && <img src={supplierData.logo} alt="Company Logo" />}
         </div>
         <div className="company-info">
-            <div className="company-name">{supplierData?.name || supplierData?.companyName}</div>
-            <div className="company-address">{supplierData?.address} {supplierData?.city} {supplierData?.state} {supplierData?.pincode}</div>
-            <div className="company-contact">{supplierData?.phone} | {supplierData?.email}</div>
-            <div className="gstin-line"><b>GSTIN:</b> <b>{supplierData?.gstin}</b> | <b>State Code:</b> <b>{supplierData?.stateCode || '06'}</b></div>
-          </div>
-        </div>
-
-        {/* Title */}
-        <div className="invoice-title1">TAX INVOICE</div>
-        <div className="subtitle">Original For Recipient</div>
-
-        {/* Invoice Info */}
-        <div className="invoice-info-section">
-          <div className="invoice-info-left">
-            <div className="info-row"><span className="info-label">Invoice Number:</span><span className="info-value">{invoiceNumber || number}</span></div>
-            <div className="info-row"><span className="info-label">Invoice Date:</span><span className="info-value">{formatDate(date)}</span></div>
-          </div>
-          <div className="invoice-info-right">
-            <div className="info-row"><span className="info-label">State:</span><span className="info-value">{supplierData?.state}</span></div>
-            <div className="info-row"><span className="info-label">Reverse Charge:</span><span className="info-value">{otherDetails?.reverseCharge ? 'YES' : 'NO'}</span></div>
-          </div>
-        </div>
-        <div className="clear"></div>
-
-        {/* Addresses */}
-        <div className="address-container">
-          <div className="address-block">
-            <div className="address-header">Details of Receiver | Billed to</div>
-            <div className="address-detail"><b>Name:</b> {buyerInfo?.companyName}<br/><b>Address:</b> {buyerInfo?.address} {buyerInfo?.city} {buyerInfo?.state} {buyerInfo?.pincode}<br/><b>GSTIN:</b> <b>{buyerInfo?.gstin}</b> | <b>State:</b> <b>{buyerInfo?.state}</b></div>
-          </div>
-          <div className="address-block">
-            <div className="address-header">Details of Consignee | Shipped to</div>
-            <div className="address-detail"><b>Name:</b> {buyerInfo?.companyName}<br/><b>Address:</b> {buyerInfo?.address} {buyerInfo?.city} {buyerInfo?.state} {buyerInfo?.pincode}<br/><b>GSTIN:</b> <b>{buyerInfo?.gstin}</b> | <b>State:</b> <b>{buyerInfo?.state}</b></div>
+          <h1>{supplierData?.name}</h1>
+          <p>{supplierData?.address}</p>
+          {/* <p>{supplierData?.city}, {supplierData?.state}, {supplierData?.pincode}</p> */}
+          <p>{supplierData?.phone}</p>
+          <p>{supplierData?.email}</p>
+          <p>GSTIN: {supplierData?.gstin}</p>
         </div>
       </div>
 
-        {/* Products */}
-        <table className="product-table">
+      {/* Invoice Title */}
+      <div className="invoice-title">
+        <h2>TAX INVOICE</h2>
+        <div className="invoice-type-checkboxes">
+          <div className="checkbox-item">
+            <input type="checkbox" checked readOnly />
+            <label>Original for Recipient</label>
+          </div>
+          <div className="checkbox-item">
+            <input type="checkbox" checked readOnly />
+            <label>Duplicate for Transporter</label>
+          </div>
+          <div className="checkbox-item">
+            <input type="checkbox" checked readOnly />
+            <label>Triplicate for Supplier</label>
+          </div>
+        </div>
+      </div>
+
+      {/* Invoice Details Box */}
+      <div className="invoice-details-box">
+        <div className="detail-left">
+          <div className="detail-item">
+            <span className="detail-label">Reverse Charge:</span>
+            <span className="detail-value">{otherDetails?.reverseCharge ? 'Yes' : 'No'}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Invoice No.:</span>
+            <span className="detail-value">{invoiceNumber || number}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Invoice Date:</span>
+            <span className="detail-value">{formatDate(date)}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">State:</span>
+            <span className="detail-value">{supplierData?.state}</span>
+            <span className="state-code">: {supplierData?.stateCode || '06'}</span>
+          </div>
+        </div>
+        <div className="detail-right">
+          <div className="detail-item">
+            <span className="detail-label">Transportation Mode:</span>
+            <span className="detail-value">{transportData?.transportMode || ''}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Vehicle No.:</span>
+            <span className="detail-value">{transportData?.vehicleNumber || ''}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Date of Supply:</span>
+            <span className="detail-value">{formatDate(date)}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Place of Supply:</span>
+            <span className="detail-value">{buyerData?.state || ''}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Party Details */}
+      <div className="party-details">
+        <div className="billed-to">
+          <h3>Details of Receiver ( Billed to: )</h3>
+          <div className="party-info">
+            <div className="detail-item">
+              <span className="detail-label">Name:</span>
+              <span className="detail-value buyer-name-container">
+                <FiUser className="buyer-icon" />
+                <span>{buyerData?.companyName}</span>
+              </span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Address:</span>
+              <span className="detail-value">{buyerData?.address}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-value">{buyerData?.city}, {buyerData?.state}, {buyerData?.pincode}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">GSTIN:</span>
+              <span className="detail-value">{buyerData?.gstin}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">State:</span>
+              <span className="detail-value">{buyerData?.state}</span>
+              <span className="state-code">: {buyerData?.stateCode || '06'}</span>
+            </div>
+          </div>
+        </div>
+        <div className="shipped-to">
+          <h3>Details of Consignee ( Shipped to: )</h3>
+          <div className="party-info">
+            <div className="detail-item">
+              <span className="detail-label">Name:</span>
+              <span className="detail-value buyer-name-container">
+                <FiUser className="buyer-icon" />
+                <span>{buyerData?.companyName}</span>
+              </span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Address:</span>
+              <span className="detail-value">{buyerData?.address}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-value">{buyerData?.city}, {buyerData?.state}, {buyerData?.pincode}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">GSTIN:</span>
+              <span className="detail-value">{buyerData?.gstin}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">State:</span>
+              <span className="detail-value">{buyerData?.state}</span>
+              <span className="state-code">: {buyerData?.stateCode || '06'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Table */}
+      <table className="product-table" style={pdfStyles.pageBreakAvoid}>
         <thead>
-            <tr>
-              <th>Sr. No.</th><th>Name of Product</th><th>HSN/SAC</th><th>QTY</th><th>Unit</th><th>Rate</th><th>Taxable Value</th><th>IGST Rate</th><th>IGST Amt</th><th>Total</th>
+          <tr className="header-row">
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Sr. No.</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Name of Product</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>HSN/SAC</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>QTY</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Unit</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Taxable Value</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">CGST</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">SGST</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Total</th>
+          </tr>
+          <tr className="sub-header-row">
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
+            <th style={forPDF ? pdfStyles.tableCell : {}}></th>
           </tr>
         </thead>
         <tbody>
@@ -157,99 +263,93 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             const amount = quantity * rate;
             const gstRate = safeCalculate(product?.gst);
             const gstAmount = (amount * gstRate) / 100;
+            const cgstAmount = gstAmount / 2;
+            const sgstAmount = gstAmount / 2;
             
             return (
-                <tr key={index}>
-                  <td>{index + 1}</td><td>{product?.name}</td><td>{product?.hsn}</td><td>{quantity}</td><td>{product?.unit || '-'}</td><td>{rate.toFixed(2)}</td><td>{amount.toFixed(2)}</td><td>{gstRate.toFixed(0)}%</td><td><b>{gstAmount.toFixed(2)}</b></td><td><b>₹{(amount + gstAmount).toFixed(2)}</b></td>
+              <tr key={index} className={index % 2 === 0 ? 'even-row' : ''}>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{index + 1}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.name}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.hsn}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{quantity}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.unit}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{rate.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{amount.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{cgstAmount.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{sgstAmount.toFixed(2)}</td>
+                <td style={forPDF ? pdfStyles.tableCell : {}}>{(amount + gstAmount).toFixed(2)}</td>
               </tr>
             );
           })}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan="3"><b>Total</b></td><td>{totalQuantity}</td><td>-</td><td>-</td><td>{subTotal.toFixed(2)}</td><td>-</td><td><b>{totalGST.toFixed(2)}</b></td><td><b>{grandTotal.toFixed(2)}</b></td>
+          <tr className="total-row">
+            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan="3">Total Quantity</td>
+            <td style={forPDF ? pdfStyles.tableCell : {}}>{totalQuantity}</td>
+            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan="8"></td>
           </tr>
-          </tfoot>
+        </tbody>
       </table>
 
-        {/* Amount Words */}
-        <div className="amount-words-box">
-          <div className="amount-words-label">Total Invoice Amount in words</div>
-          <div className="amount-words-value">{numberToWords(grandTotal)} /-</div>
+      {/* Amount Section */}
+      <div className="amount-section" style={pdfStyles.pageBreakAvoid}>
+        <div className="amount-in-words">
+          <p>Total Invoice Amount in Words:</p>
+          <p>{numberToWords(grandTotal)}</p>
         </div>
+        <div className="amount-breakdown">
+          <div className="amount-item">
+            <span>Total Amount Before Tax:</span>
+            <span>₹{subTotal.toFixed(2)}</span>
+          </div>
+          <div className="amount-item">
+            <span>Add: CGST:</span>
+            <span>₹{(totalGST / 2).toFixed(2)}</span>
+          </div>
+          <div className="amount-item">
+            <span>Add: SGST:</span>
+            <span>₹{(totalGST / 2).toFixed(2)}</span>
+          </div>
+          <div className="amount-item">
+            <span>Tax Amount: GST:</span>
+            <span>₹{totalGST.toFixed(2)}</span>
+          </div>
+          <div className="amount-item total">
+            <span>Amount With Tax:</span>
+            <span>₹{grandTotal.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
 
-        {/* Two Column */}
-        <div className="two-column-layout">
-          <div className="left-column">
-            <div className="bank-details-box">
-              <div className="bank-details-header">Bank and Payment Details</div>
-              {bankData && (
-                <>
-                  <div className="bank-detail-row"><b>Account Name:</b> {supplierData?.name || supplierData?.companyName}</div>
-                  <div className="bank-detail-row"><b>Account No.:</b> {bankData.accountNumber}</div>
-                  <div className="bank-detail-row"><b>IFSC Code:</b> {bankData.ifscCode}</div>
-                  <div className="bank-detail-row"><b>Bank:</b> {bankData.bankName}</div>
-                  <div className="bank-detail-row"><b>Branch:</b> {bankData.branchName || 'N/A'}</div>
-                </>
-              )}
-          </div>
-          </div>
-          <div className="right-column">
-            <div className="summary-details-right">
+      {/* Terms and Signature */}
+      <div className="footer-section" style={pdfStyles.pageBreakAvoid}>
+        <div className="terms">
+          <h4>Terms and Conditions</h4>
+          <ol>
+            <li>This is an electronically generated document.</li>
+            <li>All disputes are subject to {supplierData?.city} jurisdiction.</li>
+          </ol>
+          {bankData && (
+            <div className="bank-details">
+              <br />
+              <h4>Bank Details:</h4>
              
-              <table className="summary-table">
-                <tbody>
-                  <tr>
-                    <td className="summary-label">Total Before Tax</td>
-                    <td className="summary-value">₹{subTotal.toFixed(2)}</td>
-                  </tr>
-                  <tr>
-                    <td className="summary-label">Add: IGST</td>
-                    <td className="summary-value"><b>₹{totalGST.toFixed(2)}</b></td>
-                  </tr>
-                  <tr className="highlight-row">
-                    <td className="summary-label">Total Tax</td>
-                    <td className="summary-value"><b>₹{totalGST.toFixed(2)}</b></td>
-                  </tr>
-                  <tr className="total-row final-amount-row">
-                    <td className="summary-label final-amount-label">Final Amount</td>
-                    <td className="summary-value final-amount-value">₹{grandTotal.toFixed(2)}</td>
-                  </tr>
-                  <tr className="highlight-row">
-                    <td className="summary-label">Balance Due</td>
-                    <td className="summary-value">₹{grandTotal.toFixed(2)}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <p>Bank Name:{bankData.bankName}</p>
+              <p>Account Number:{bankData.accountNumber}</p>
+              <p>IFSC Code: {bankData.ifscCode}</p>
             </div>
-          </div>
-      </div>
-
-        {/* Terms */}
-        <div className="terms-section">
-          <div className="terms-header">Terms And Conditions</div>
-          <div className="terms-text">
-            1. This is an electronically generated document.<br/>
-            2. All disputes are subject to Faridabad jurisdiction.
-          </div>
-          <div className="certification-text">Certified that the particulars given above are true and correct</div>
-          <div className="signature-section">
-            <div className="for-company">For, {supplierData?.name || supplierData?.companyName}</div>
-            <div className="signature-line">Authorised Signatory</div>
+          )}
+        </div>
+        <div className="signature-section">
+        
+          <div className="signature-line">
+            <p>For, {supplierData?.companyName}</p>
+            <p className="signatory">Authorised Signatory</p>
           </div>
         </div>
       </div>
-      
-      {/* Bottom Thank You OUTSIDE */}
-      <div className="thank-you-bottom">Thank you for your business</div>
     </div>
   );
 });
 
 export default InvoiceTemplate; 
-
-
-
-
-
-
