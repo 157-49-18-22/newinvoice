@@ -272,6 +272,17 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
        return sum + itemTotal + gstAmt + cessAmt;
      }, 0);
 
+    // Create a clean buyer data object
+    const buyerData = selectedBuyer ? {
+      companyName: selectedBuyer.companyName || '',
+      address: selectedBuyer.address || '',
+      city: selectedBuyer.city || '',
+      state: selectedBuyer.state || '',
+      pincode: selectedBuyer.pincode || '',
+      gstin: selectedBuyer.gstin || '',
+      stateCode: selectedBuyer.stateCode || '06' // Default state code if not provided
+    } : {};
+
     const invoiceData = {
       // Include the id if we are editing
       id: invoiceId, 
@@ -281,17 +292,16 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       invoicePrefix: invoicePrefix, // Keep individual prefix for reference
       date: invoiceDate,
       amount: totalAmount, // Use recalculated amount
-      supplierData,
-      selectedBuyer,
-      buyerData: selectedBuyer, // Also pass as buyerData for compatibility
+      supplierData: supplierData || {},
+      selectedBuyer: buyerData, // Keep for backward compatibility
+      buyerData, // This is what InvoiceTemplate expects
       consigneeType,
       products: invoiceProducts, // Pass the current list of products
-      transportData,
-      otherData,
-      bankData,
-      includeSignature,
-      signatureImage
-      // Add status if managed here, or let App.js handle it
+      transportData: transportData || {},
+      otherData: otherData || {},
+      bankData: bankData || {},
+      includeSignature: includeSignature || false,
+      signatureImage: includeSignature ? signatureImage : null
     };
     console.log('Saving invoice with invoiceNumber:', invoiceNumber); // Debug log
     console.log('About to call onSave with data:', invoiceData); // Debug log

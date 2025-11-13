@@ -22,7 +22,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     console.log('InvoiceTemplate mounted and ready');
     console.log('Products in template:', data?.products?.length || 0);
     console.log('Supplier data:', data?.supplierData);
-    console.log('Buyer data:', data?.buyerData);
+    console.log('Buyer data:', data?.buyerData || data?.selectedBuyer);
     
     // Validate that crucial data exists
     if (!data?.products || data.products.length === 0) {
@@ -31,24 +31,30 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     if (!data?.supplierData?.companyName) {
       console.warn('WARNING: No supplier company name');
     }
-    if (!data?.buyerData?.companyName) {
-      console.warn('WARNING: No buyer company name');
+    if (!data?.buyerData?.companyName && !data?.selectedBuyer?.companyName) {
+      console.warn('WARNING: No buyer company name found in either buyerData or selectedBuyer');
     }
   }, [data, bankData]);
 
+  // Get buyer data from either buyerData or selectedBuyer for backward compatibility
+  const buyerDataToUse = data?.buyerData || data?.selectedBuyer || {};
+  
+  // Always treat consignee as same as receiver to avoid showing "Same as Receiver" text
+  const effectiveConsigneeType = 'same';
+  
   const {
     invoiceNumber = '',
     number = '',
     date = new Date(),
     products = [],
     supplierData = {},
-    buyerData = {},
     transportData = {},
-    otherDetails = {}
+    otherDetails = {},
+    consigneeType = effectiveConsigneeType  // Use the effective consignee type
   } = data || {};
 
   // Check if it's an inter-state transaction
-  const isInterState = supplierData?.state !== buyerData?.state;
+  const isInterState = supplierData?.state !== buyerDataToUse?.state;
 
   // Safe calculation helper
   const safeCalculate = (value) => {
@@ -164,7 +170,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           </div>
           <div className="detail-item">
             <span className="detail-label">Place of Supply:</span>
-            <span className="detail-value">{buyerData?.state || ''}</span>
+            <span className="detail-value">{buyerDataToUse?.state || ''}</span>
           </div>
         </div>
       </div>
@@ -178,53 +184,109 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
               <span className="detail-label">Name:</span>
               <span className="detail-value buyer-name-container">
                 <FiUser className="buyer-icon" />
-                <span>{buyerData?.companyName}</span>
+                <span>{buyerDataToUse?.companyName || 'Not specified'}</span>
               </span>
             </div>
             <div className="detail-item">
               <span className="detail-label">Address:</span>
-              <span className="detail-value">{buyerData?.address}</span>
+              <span className="detail-value">{buyerDataToUse?.address || ''}</span>
             </div>
             <div className="detail-item">
-              <span className="detail-value">{buyerData?.city}, {buyerData?.state}, {buyerData?.pincode}</span>
+              <span className="detail-value">
+                {[buyerDataToUse?.city, buyerDataToUse?.state, buyerDataToUse?.pincode]
+                  .filter(Boolean)
+                  .join(', ')}
+              </span>
             </div>
             <div className="detail-item">
               <span className="detail-label">GSTIN:</span>
-              <span className="detail-value">{buyerData?.gstin}</span>
+              <span className="detail-value">{buyerDataToUse?.gstin || 'Not specified'}</span>
             </div>
             <div className="detail-item">
               <span className="detail-label">State:</span>
-              <span className="detail-value">{buyerData?.state}</span>
-              <span className="state-code">: {buyerData?.stateCode || '06'}</span>
+              <span className="detail-value">{buyerDataToUse?.state || ''}</span>
+              {buyerDataToUse?.state && (
+                <span className="state-code">: {buyerDataToUse?.stateCode || '06'}</span>
+              )}
             </div>
           </div>
         </div>
         <div className="shipped-to">
           <h3>Details of Consignee ( Shipped to: )</h3>
           <div className="party-info">
-            <div className="detail-item">
-              <span className="detail-label">Name:</span>
-              <span className="detail-value buyer-name-container">
-                <FiUser className="buyer-icon" />
-                <span>{buyerData?.companyName}</span>
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Address:</span>
-              <span className="detail-value">{buyerData?.address}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-value">{buyerData?.city}, {buyerData?.state}, {buyerData?.pincode}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">GSTIN:</span>
-              <span className="detail-value">{buyerData?.gstin}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">State:</span>
-              <span className="detail-value">{buyerData?.state}</span>
-              <span className="state-code">: {buyerData?.stateCode || '06'}</span>
-            </div>
+            {consigneeType === 'same' ? (
+              // When consignee is same as receiver, show receiver's details
+              <>
+                <div className="detail-item">
+                  <span className="detail-label">Name:</span>
+                  <span className="detail-value buyer-name-container">
+                    <FiUser className="buyer-icon" />
+                    <span>{buyerDataToUse?.companyName || 'Not specified'}</span>
+                  </span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Address:</span>
+                  <span className="detail-value">{buyerDataToUse?.address || ''}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-value">
+                    {[buyerDataToUse?.city, buyerDataToUse?.state, buyerDataToUse?.pincode]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">GSTIN:</span>
+                  <span className="detail-value">{buyerDataToUse?.gstin || 'Not specified'}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">State:</span>
+                  <span className="detail-value">{buyerDataToUse?.state || ''}</span>
+                  {buyerDataToUse?.state && (
+                    <span className="state-code">: {buyerDataToUse?.stateCode || '06'}</span>
+                  )}
+                </div>
+              </>
+            ) : (
+              // Show consignee details if different
+              <>
+                <div className="detail-item">
+                  <span className="detail-label">Name:</span>
+                  <span className="detail-value buyer-name-container">
+                    <FiUser className="buyer-icon" />
+                    <span>{transportData?.consigneeName || buyerDataToUse?.companyName || 'Not specified'}</span>
+                  </span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Address:</span>
+                  <span className="detail-value">{transportData?.consigneeAddress || buyerDataToUse?.address || ''}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-value">
+                    {[
+                      transportData?.consigneeCity || buyerDataToUse?.city,
+                      transportData?.consigneeState || buyerDataToUse?.state,
+                      transportData?.consigneePincode || buyerDataToUse?.pincode
+                    ].filter(Boolean).join(', ')}
+                  </span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">GSTIN:</span>
+                  <span className="detail-value">
+                    {transportData?.consigneeGstin || buyerDataToUse?.gstin || 'Not specified'}
+                  </span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">State:</span>
+                  <span className="detail-value">
+                    {transportData?.consigneeState || buyerDataToUse?.state || ''}
+                  </span>
+                  {(transportData?.consigneeState || buyerDataToUse?.state) && (
+                    <span className="state-code">: {transportData?.consigneeStateCode || buyerDataToUse?.stateCode || '06'}</span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

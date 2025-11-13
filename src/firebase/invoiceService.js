@@ -40,17 +40,53 @@ const convertTimestamps = (data) => {
   return result;
 };
 
+// Helper function to clean data for Firestore
+const cleanDataForFirestore = (data) => {
+  if (data === null || data === undefined) {
+    return null;
+  }
+  
+  // Convert Date objects to Firestore Timestamp
+  if (data instanceof Date) {
+    return data;
+  }
+  
+  // Handle arrays
+  if (Array.isArray(data)) {
+    return data.map(cleanDataForFirestore);
+  }
+  
+  // Handle plain objects
+  if (typeof data === 'object') {
+    const result = {};
+    for (const key in data) {
+      if (data[key] !== undefined) {
+        result[key] = cleanDataForFirestore(data[key]);
+      }
+    }
+    return result;
+  }
+  
+  // Return primitives as is
+  return data;
+};
+
 // Add a new invoice
 export const addInvoice = async (invoiceData) => {
   try {
     console.log('🔥 Firebase: Attempting to add invoice to Firestore...');
     
+    // Clean all data before sending to Firestore
+    const cleanedData = cleanDataForFirestore(invoiceData);
+    
     // Prepare the invoice data
     const invoiceToAdd = {
-      ...invoiceData,
+      ...cleanedData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
+    
+    console.log('🔥 Firebase: Prepared invoice data:', invoiceToAdd);
     
     // Add to Firestore
     const docRef = await addDoc(collection(db, INVOICES_COLLECTION), invoiceToAdd);
@@ -59,7 +95,7 @@ export const addInvoice = async (invoiceData) => {
     // Return the saved invoice with the new ID
     return { 
       id: docRef.id, 
-      ...invoiceData,
+      ...invoiceData, // Return original data, not the cleaned one
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -74,17 +110,23 @@ export const addInvoice = async (invoiceData) => {
 export const updateInvoice = async (invoiceId, invoiceData) => {
   try {
     const invoiceRef = doc(db, INVOICES_COLLECTION, invoiceId);
+    
+    // Clean all data before sending to Firestore
+    const cleanedData = cleanDataForFirestore(invoiceData);
+    
     const updateData = {
-      ...invoiceData,
+      ...cleanedData,
       updatedAt: serverTimestamp()
     };
+    
+    console.log('🔥 Firebase: Updating invoice with data:', updateData);
     
     await updateDoc(invoiceRef, updateData);
     console.log('✅ Firebase: Invoice updated successfully');
     
     return { 
       id: invoiceId, 
-      ...invoiceData,
+      ...invoiceData, // Return original data, not the cleaned one
       updatedAt: new Date()
     };
   } catch (error) {
