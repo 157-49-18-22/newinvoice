@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FiSearch, FiPlus, FiFilter, FiMoreVertical, FiDownload } from 'react-icons/fi';
 import { BsCashStack } from 'react-icons/bs';
 import DottedArrow from './DottedArrow';
-import InvoiceTemplate from './InvoiceTemplate';
-import ReactDOM from 'react-dom/client';
-import { generatePDF } from '../utils/generatePDF';
+// import InvoiceTemplate from './InvoiceTemplate';
+// import ReactDOM from 'react-dom/client';
+// import { generatePDF } from '../utils/generatePDF';
 import './InvoiceDashboard.css';
 
 const formatAmount = (amount) => {
@@ -29,22 +29,23 @@ const formatDate = (dateString) => {
 const InvoiceDashboard = (props) => {
   // Destructure necessary props
   const {
-    onFilterClick, 
-    onTabChange, 
-    activeTab, 
-    onCreateInvoice, 
-    invoices, 
-    onEditInvoice, 
-    onDuplicateInvoice, 
-    onUpdateStatus,
-    onSendEmail,
-    onSendReminder,
-    onCancelInvoice
+    // onFilterClick, 
+    // onTabChange, 
+    // activeTab, 
+    // onCreateInvoice, 
+    invoices 
+    // onEditInvoice, 
+    // onDuplicateInvoice, 
+    // onUpdateStatus,
+    // onSendEmail,
+    // onSendReminder,
+    // onCancelInvoice
   } = props;
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
-  const invoiceTemplateRef = useRef(null);
+  // Commenting out unused variables
+  // const invoiceTemplateRef = useRef(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
 

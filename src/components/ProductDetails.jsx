@@ -44,7 +44,7 @@ const ProductDetails = ({ onClose, onSave, initialData = null }) => {
 
   useEffect(() => {
     setProductData(getInitialState());
-  }, [initialData]);
+  }, [initialData, getInitialState]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
