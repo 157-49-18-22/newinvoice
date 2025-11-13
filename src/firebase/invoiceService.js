@@ -8,26 +8,61 @@ import {
   doc, 
   query, 
   orderBy,
-  onSnapshot 
+  onSnapshot,
+  Timestamp,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from './config';
 
 const INVOICES_COLLECTION = 'invoices';
 
+// Helper function to convert Firestore data to plain JS objects
+const convertTimestamps = (data) => {
+  if (data === null || typeof data !== 'object') return data;
+  
+  // Convert Firestore Timestamp to Date
+  if (data.toDate && typeof data.toDate === 'function') {
+    return data.toDate();
+  }
+  
+  // Handle arrays
+  if (Array.isArray(data)) {
+    return data.map(convertTimestamps);
+  }
+  
+  // Handle objects
+  const result = {};
+  for (const key in data) {
+    if (data[key] !== undefined) {
+      result[key] = convertTimestamps(data[key]);
+    }
+  }
+  return result;
+};
+
 // Add a new invoice
 export const addInvoice = async (invoiceData) => {
   try {
     console.log('🔥 Firebase: Attempting to add invoice to Firestore...');
-    console.log('🔥 Firebase: Database object:', db);
-    console.log('🔥 Firebase: Invoice data:', invoiceData);
     
-    const docRef = await addDoc(collection(db, INVOICES_COLLECTION), {
+    // Prepare the invoice data
+    const invoiceToAdd = {
+      ...invoiceData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    // Add to Firestore
+    const docRef = await addDoc(collection(db, INVOICES_COLLECTION), invoiceToAdd);
+    console.log('✅ Firebase: Invoice added successfully with ID: ', docRef.id);
+    
+    // Return the saved invoice with the new ID
+    return { 
+      id: docRef.id, 
       ...invoiceData,
       createdAt: new Date(),
       updatedAt: new Date()
-    });
-    console.log('✅ Firebase: Invoice added successfully with ID: ', docRef.id);
-    return { id: docRef.id, ...invoiceData };
+    };
   } catch (error) {
     console.error('❌ Firebase: Error adding invoice: ', error);
     console.error('❌ Firebase: Error details:', error.message);
@@ -39,14 +74,21 @@ export const addInvoice = async (invoiceData) => {
 export const updateInvoice = async (invoiceId, invoiceData) => {
   try {
     const invoiceRef = doc(db, INVOICES_COLLECTION, invoiceId);
-    await updateDoc(invoiceRef, {
+    const updateData = {
+      ...invoiceData,
+      updatedAt: serverTimestamp()
+    };
+    
+    await updateDoc(invoiceRef, updateData);
+    console.log('✅ Firebase: Invoice updated successfully');
+    
+    return { 
+      id: invoiceId, 
       ...invoiceData,
       updatedAt: new Date()
-    });
-    console.log('Invoice updated successfully');
-    return { id: invoiceId, ...invoiceData };
+    };
   } catch (error) {
-    console.error('Error updating invoice: ', error);
+    console.error('❌ Firebase: Error updating invoice: ', error);
     throw error;
   }
 };
@@ -68,13 +110,16 @@ export const getAllInvoices = async () => {
   try {
     const q = query(collection(db, INVOICES_COLLECTION), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    const invoices = [];
-    querySnapshot.forEach((doc) => {
-      invoices.push({ id: doc.id, ...doc.data() });
+    
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...convertTimestamps(data)
+      };
     });
-    return invoices;
   } catch (error) {
-    console.error('Error getting invoices: ', error);
+    console.error('❌ Firebase: Error getting invoices: ', error);
     throw error;
   }
 };
@@ -84,12 +129,12 @@ export const subscribeToInvoices = (callback) => {
   const q = query(collection(db, INVOICES_COLLECTION), orderBy('createdAt', 'desc'));
   
   return onSnapshot(q, (querySnapshot) => {
-    const invoices = [];
-    querySnapshot.forEach((doc) => {
-      invoices.push({ id: doc.id, ...doc.data() });
-    });
+    const invoices = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...convertTimestamps(doc.data())
+    }));
     callback(invoices);
   }, (error) => {
-    console.error('Error listening to invoices: ', error);
+    console.error('Error listening to invoices:', error);
   });
 };

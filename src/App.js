@@ -156,19 +156,46 @@ function App() {
       } else {
         // Create new invoice in Firebase
         console.log('🔥 [App] Creating new invoice in Firebase...');
+        
+        // Prepare the invoice data with proper data types and null checks
         const newInvoiceData = {
-          type: invoiceData.invoiceType || 'tax-invoice',
-          amount: invoiceData.amount || 0,
-          number: invoiceData.invoiceNo || String(invoices.length + 1),
-          date: invoiceData.date || new Date().toLocaleDateString('en-IN'),
+          type: String(invoiceData.invoiceType || 'tax-invoice'),
+          amount: Number(invoiceData.amount) || 0,
+          number: String(invoiceData.invoiceNo || (invoices.length + 1)),
+          date: invoiceData.date ? new Date(invoiceData.date).toISOString() : new Date().toISOString(),
           status: 'unpaid',
-          selectedBuyer: invoiceData.selectedBuyer || {},
-          supplierData: invoiceData.supplierData || {},
-          products: invoiceData.products || [],
-          transportData: invoiceData.transportData || {},
-          otherData: invoiceData.otherData || {},
-          bankData: invoiceData.bankData || {},
-          includeSignature: invoiceData.includeSignature || false,
+          
+          // Handle nested objects with proper null checks
+          selectedBuyer: invoiceData.selectedBuyer && typeof invoiceData.selectedBuyer === 'object' 
+            ? { ...invoiceData.selectedBuyer } 
+            : {},
+            
+          supplierData: invoiceData.supplierData && typeof invoiceData.supplierData === 'object' 
+            ? { ...invoiceData.supplierData } 
+            : {},
+            
+          products: Array.isArray(invoiceData.products) 
+            ? invoiceData.products.map(p => ({
+                ...p,
+                price: Number(p.price) || 0,
+                quantity: Number(p.quantity) || 0,
+                total: (Number(p.price) || 0) * (Number(p.quantity) || 0)
+              }))
+            : [],
+            
+          transportData: invoiceData.transportData && typeof invoiceData.transportData === 'object' 
+            ? { ...invoiceData.transportData } 
+            : {},
+            
+          otherData: invoiceData.otherData && typeof invoiceData.otherData === 'object' 
+            ? { ...invoiceData.otherData } 
+            : {},
+            
+          bankData: invoiceData.bankData && typeof invoiceData.bankData === 'object' 
+            ? { ...invoiceData.bankData } 
+            : {},
+            
+          includeSignature: Boolean(invoiceData.includeSignature),
           signatureImage: invoiceData.signatureImage || null
         };
         
