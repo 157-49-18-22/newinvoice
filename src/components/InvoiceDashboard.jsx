@@ -124,6 +124,7 @@ const InvoiceDashboard = (props) => {
     setOpenMenuId(null);
   };
   
+  // eslint-disable-next-line
   const handleViewHistory = (invoiceId) => {
     console.log(`Action: View History ${invoiceId}`);
     setOpenMenuId(null);
@@ -144,7 +145,7 @@ const InvoiceDashboard = (props) => {
   }, [openMenuId]);
 
   // Set default active tab
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('all'); // eslint-disable-line
   
   // Filter invoices based on active tab
   const filteredInvoices = invoices.filter(invoice => {

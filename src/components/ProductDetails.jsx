@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './shared.css';
 import './ProductDetails.css';
 
 const ProductDetails = ({ onClose, onSave, initialData = null }) => {
   const [activeTab, setActiveTab] = useState('basic');
 
-  const getInitialState = () => {
+  const getInitialState = useCallback(() => {
     const defaults = {
       id: null,
       name: '',
@@ -38,7 +38,7 @@ const ProductDetails = ({ onClose, onSave, initialData = null }) => {
       };
     } 
     return defaults;
-  };
+  }, [initialData]);
 
   const [productData, setProductData] = useState(getInitialState);
 

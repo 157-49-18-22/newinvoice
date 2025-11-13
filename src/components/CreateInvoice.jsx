@@ -115,15 +115,19 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   const [showOtherDetails, setShowOtherDetails] = useState(false);
   const [showBankDetails, setShowBankDetails] = useState(false);
   // State for signature and editing
+  // eslint-disable-next-line
   const invoiceTemplateRef = useRef(null);
   const [showSignature, setShowSignature] = useState(initialInvoiceData?.includeSignature || false);
   const [signatureType, setSignatureType] = useState('upload');
   const [signatureImage, setSignatureImage] = useState(initialInvoiceData?.signatureImage || null);
+  // eslint-disable-next-line
   const fileInputRef = useRef(null);
   const [includeSignature, setIncludeSignature] = useState(initialInvoiceData?.includeSignature || false);
+  // eslint-disable-next-line
   const canvasRef = useRef(null);
   const [editingBuyer, setEditingBuyer] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
+  // eslint-disable-next-line
   const [viewBankDetailsOnly, setViewBankDetailsOnly] = useState(false);
 
   const [allBuyers, setAllBuyers] = useState(() => loadFromLocalStorage(BUYERS_STORAGE_KEY, initialBuyers));
@@ -329,6 +333,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
     }
   };
 
+  // eslint-disable-next-line
   const handleSignatureSave = (dataUrl) => {
     setSignatureImage(dataUrl);
     setSignatureType('upload');
