@@ -143,6 +143,9 @@ const InvoiceDashboard = (props) => {
     };
   }, [openMenuId]);
 
+  // Set default active tab
+  const [activeTab, setActiveTab] = useState('all');
+  
   // Filter invoices based on active tab
   const filteredInvoices = invoices.filter(invoice => {
     if (activeTab === 'all') {
@@ -154,6 +157,9 @@ const InvoiceDashboard = (props) => {
     }
     return false;
   });
+  
+  // Import generatePDF
+  const { generatePDF } = require('../utils/generatePDF');
 
   const getInvoiceTitle = (invoice) => {
     if (invoice.selectedBuyer?.companyName) {

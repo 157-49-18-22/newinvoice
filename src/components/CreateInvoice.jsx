@@ -114,16 +114,17 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   const [showTransportationDetails, setShowTransportationDetails] = useState(false);
   const [showOtherDetails, setShowOtherDetails] = useState(false);
   const [showBankDetails, setShowBankDetails] = useState(false);
-  // Commenting out unused variables to fix ESLint warnings
-  // const invoiceTemplateRef = useRef(null);
-  // const [showSignature, setShowSignature] = useState(initialInvoiceData?.includeSignature || false);
-  // const [signatureType, setSignatureType] = useState('upload');
+  // State for signature and editing
+  const invoiceTemplateRef = useRef(null);
+  const [showSignature, setShowSignature] = useState(initialInvoiceData?.includeSignature || false);
+  const [signatureType, setSignatureType] = useState('upload');
   const [signatureImage, setSignatureImage] = useState(initialInvoiceData?.signatureImage || null);
-  // const fileInputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [includeSignature, setIncludeSignature] = useState(initialInvoiceData?.includeSignature || false);
-  // const canvasRef = useRef(null);
-  // const [editingBuyer, setEditingBuyer] = useState(null);
-  // const [editingProduct, setEditingProduct] = useState(null);
+  const canvasRef = useRef(null);
+  const [editingBuyer, setEditingBuyer] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [viewBankDetailsOnly, setViewBankDetailsOnly] = useState(false);
 
   const [allBuyers, setAllBuyers] = useState(() => loadFromLocalStorage(BUYERS_STORAGE_KEY, initialBuyers));
   const [allProducts, setAllProducts] = useState(() => loadFromLocalStorage(PRODUCTS_STORAGE_KEY, initialProducts));
@@ -328,11 +329,10 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
     }
   };
 
-  // Commenting out unused function
-  // const handleSignatureSave = (dataUrl) => {
-  //   setSignatureImage(dataUrl);
-  //   setSignatureType('upload');
-  // };
+  const handleSignatureSave = (dataUrl) => {
+    setSignatureImage(dataUrl);
+    setSignatureType('upload');
+  };
 
   const handleDeleteSignature = () => {
     setSignatureImage(null);
