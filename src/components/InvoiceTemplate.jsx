@@ -16,14 +16,14 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
   // Debug logs
   console.log('InvoiceTemplate rendered with data:', data);
   console.log('InvoiceTemplate bank data:', bankData);
-  
+
   // Add effect to log when component is fully mounted
   useEffect(() => {
     console.log('InvoiceTemplate mounted and ready');
     console.log('Products in template:', data?.products?.length || 0);
     console.log('Supplier data:', data?.supplierData);
     console.log('Buyer data:', data?.buyerData || data?.selectedBuyer);
-    
+
     // Validate that crucial data exists
     if (!data?.products || data.products.length === 0) {
       console.warn('WARNING: No products in invoice data');
@@ -38,10 +38,10 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
 
   // Get buyer data from either buyerData or selectedBuyer for backward compatibility
   const buyerDataToUse = data?.buyerData || data?.selectedBuyer || {};
-  
+
   // Always treat consignee as same as receiver to avoid showing "Same as Receiver" text
   const effectiveConsigneeType = 'same';
-  
+
   const {
     invoiceNumber = '',
     number = '',
@@ -50,11 +50,31 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     supplierData = {},
     transportData = {},
     otherDetails = {},
-    consigneeType = effectiveConsigneeType  // Use the effective consignee type
+    consigneeType = effectiveConsigneeType,  // Use the effective consignee type
+    gstType = 'auto' // Default to auto if not specified
   } = data || {};
 
-  // Check if it's an inter-state transaction
+  // Check if it's an inter-state transaction (for auto mode)
   const isInterState = supplierData?.state !== buyerDataToUse?.state;
+
+  // Determine which GST type to show based on user selection
+  let showIGST = false;
+  let showSGST = false;
+
+  if (gstType === 'auto') {
+    // Auto mode: use state-based logic
+    showIGST = isInterState;
+    showSGST = !isInterState;
+  } else if (gstType === 'igst') {
+    showIGST = true;
+    showSGST = false;
+  } else if (gstType === 'sgst') {
+    showIGST = false;
+    showSGST = true;
+  } else if (gstType === 'both') {
+    showIGST = true;
+    showSGST = true;
+  }
 
   // Safe calculation helper
   const safeCalculate = (value) => {
@@ -302,9 +322,10 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <th style={forPDF ? pdfStyles.tableCell : {}}>Unit</th>
             <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
             <th style={forPDF ? pdfStyles.tableCell : {}}>Taxable Value</th>
-            {isInterState ? (
+            {showIGST && (
               <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">IGST</th>
-            ) : (
+            )}
+            {showSGST && (
               <>
                 <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">CGST</th>
                 <th style={forPDF ? pdfStyles.tableCell : {}} colSpan="2">SGST</th>
@@ -320,12 +341,13 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <th style={forPDF ? pdfStyles.tableCell : {}}></th>
             <th style={forPDF ? pdfStyles.tableCell : {}}></th>
             <th style={forPDF ? pdfStyles.tableCell : {}}></th>
-            {isInterState ? (
+            {showIGST && (
               <>
                 <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
                 <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
               </>
-            ) : (
+            )}
+            {showSGST && (
               <>
                 <th style={forPDF ? pdfStyles.tableCell : {}}>Rate</th>
                 <th style={forPDF ? pdfStyles.tableCell : {}}>Amount</th>
@@ -345,7 +367,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             const gstAmount = (amount * gstRate) / 100;
             const cgstAmount = gstAmount / 2;
             const sgstAmount = gstAmount / 2;
-            
+
             return (
               <tr key={index} className={index % 2 === 0 ? 'even-row' : ''}>
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{index + 1}</td>
@@ -355,12 +377,13 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{product?.unit}</td>
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{rate.toFixed(2)}</td>
                 <td style={forPDF ? pdfStyles.tableCell : {}}>{amount.toFixed(2)}</td>
-                {isInterState ? (
+                {showIGST && (
                   <>
                     <td style={forPDF ? pdfStyles.tableCell : {}}>{gstRate.toFixed(1)}%</td>
                     <td style={forPDF ? pdfStyles.tableCell : {}}>{gstAmount.toFixed(2)}</td>
                   </>
-                ) : (
+                )}
+                {showSGST && (
                   <>
                     <td style={forPDF ? pdfStyles.tableCell : {}}>{(gstRate / 2).toFixed(1)}%</td>
                     <td style={forPDF ? pdfStyles.tableCell : {}}>{cgstAmount.toFixed(2)}</td>
@@ -375,7 +398,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           <tr className="total-row">
             <td style={forPDF ? pdfStyles.tableCell : {}} colSpan="3">Total Quantity</td>
             <td style={forPDF ? pdfStyles.tableCell : {}}>{totalQuantity}</td>
-            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan={isInterState ? "6" : "8"}></td>
+            <td style={forPDF ? pdfStyles.tableCell : {}} colSpan={showIGST && showSGST ? "10" : (showIGST || showSGST ? "6" : "4")}></td>
           </tr>
         </tbody>
       </table>
@@ -414,7 +437,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <div className="bank-details">
               <br />
               <h4>Bank Details:</h4>
-             
+
               <p>Bank Name:{bankData.bankName}</p>
               <p>Account Number:{bankData.accountNumber}</p>
               <p>IFSC Code: {bankData.ifscCode}</p>
@@ -422,7 +445,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           )}
         </div>
         <div className="signature-section">
-        
+
           <div className="signature-line">
             <p>For, {supplierData?.companyName}</p>
             <p className="signatory">Authorised Signatory</p>

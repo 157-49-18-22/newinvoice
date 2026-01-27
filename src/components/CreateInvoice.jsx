@@ -32,8 +32,8 @@ const initialBuyers = [
     address: '',
     gstin: '',
     state: '',
-    city: '', 
-    pincode: '' 
+    city: '',
+    pincode: ''
   },
   {
     id: 2,
@@ -42,7 +42,7 @@ const initialBuyers = [
     gstin: '22AAICG8226H1ZO',
     state: 'Chhattisgarh',
     city: 'Raipur',
-    pincode: '492004' 
+    pincode: '492004'
   }
 ];
 
@@ -79,7 +79,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   console.log('CreateInvoice component props:', { onClose, onSave, initialInvoiceData });
   console.log('onSave prop type:', typeof onSave);
   console.log('onSave prop value:', onSave);
-  
+
   // Store the original onSave function
   const originalOnSave = onSave;
   // --- State Initialization ---
@@ -87,24 +87,25 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   const [invoiceId, setInvoiceId] = useState(initialInvoiceData?.id || null);
   const [invoiceType, setInvoiceType] = useState(initialInvoiceData?.invoiceType || '');
   const [consigneeType, setConsigneeType] = useState(initialInvoiceData?.consigneeType || 'same'); // Default to 'same'
+  const [gstType, setGstType] = useState(initialInvoiceData?.gstType || 'auto'); // 'auto', 'igst', 'sgst', 'both'
   const [selectedBuyer, setSelectedBuyer] = useState(initialInvoiceData?.selectedBuyer || null);
   const [transportData, setTransportData] = useState(initialInvoiceData?.transportData || null);
   const [otherData, setOtherData] = useState(initialInvoiceData?.otherData || null);
   const [bankData, setBankData] = useState(initialInvoiceData?.bankData || null);
   const [supplierData, setSupplierData] = useState(initialInvoiceData?.supplierData || null);
   const [invoiceDate, setInvoiceDate] = useState(initialInvoiceData?.date || new Date().toISOString().split('T')[0]); // Default to today
-  
+
   // Extract prefix and number if invoiceNo exists
   const initialInvoiceNo = initialInvoiceData?.invoiceNo || '';
   const numberMatch = initialInvoiceNo.match(/\d+$/);
   const initialNum = numberMatch ? numberMatch[0] : '';
   const initialPrefix = initialInvoiceNo.replace(initialNum, '');
-  
+
   const [invoicePrefix, setInvoicePrefix] = useState(initialPrefix);
   const [invoiceNumber, setInvoiceNumber] = useState(initialNum);
-  
+
   const [invoiceProducts, setInvoiceProducts] = useState(initialInvoiceData?.products || []);
-  
+
   // Other existing state...
   const [showSupplierDetails, setShowSupplierDetails] = useState(false);
   const [showBuyerList, setShowBuyerList] = useState(false);
@@ -143,6 +144,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       setInvoiceId(initialInvoiceData.id || null);
       setInvoiceType(initialInvoiceData.invoiceType || '');
       setConsigneeType(initialInvoiceData.consigneeType || 'same');
+      setGstType(initialInvoiceData.gstType || 'auto');
       setSelectedBuyer(initialInvoiceData.selectedBuyer || null);
       setTransportData(initialInvoiceData.transportData || null);
       setOtherData(initialInvoiceData.otherData || null);
@@ -152,7 +154,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       setInvoiceProducts(initialInvoiceData.products || []);
       setIncludeSignature(initialInvoiceData.includeSignature || false);
       setSignatureImage(initialInvoiceData.signatureImage || null);
-      
+
       const invNo = initialInvoiceData.invoiceNo || '';
       const numMatch = invNo.match(/\d+$/);
       const num = numMatch ? numMatch[0] : '';
@@ -160,17 +162,18 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       setInvoicePrefix(prefix);
       setInvoiceNumber(num);
     } else {
-        // Reset state if initialInvoiceData becomes null (e.g., switching from edit to new)
-        console.log('[CreateInvoice Effect] Initial data is null, resetting state.');
-        setInvoiceId(null);
-        setInvoiceType('');
-        setConsigneeType('same');
-        setSelectedBuyer(null);
-        // ... reset other fields as needed ...
-        setInvoiceDate(new Date().toISOString().split('T')[0]);
-        setInvoicePrefix('');
-        setInvoiceNumber('');
-        setInvoiceProducts([]);
+      // Reset state if initialInvoiceData becomes null (e.g., switching from edit to new)
+      console.log('[CreateInvoice Effect] Initial data is null, resetting state.');
+      setInvoiceId(null);
+      setInvoiceType('');
+      setConsigneeType('same');
+      setGstType('auto');
+      setSelectedBuyer(null);
+      // ... reset other fields as needed ...
+      setInvoiceDate(new Date().toISOString().split('T')[0]);
+      setInvoicePrefix('');
+      setInvoiceNumber('');
+      setInvoiceProducts([]);
     }
   }, [initialInvoiceData]); // Depend on the prop
 
@@ -250,12 +253,12 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
         const updatedProducts = [...prevProducts];
         updatedProducts[existingProductIndex] = productData;
         return updatedProducts;
-    } else {
+      } else {
         const newProduct = { ...productData, id: Date.now() };
         return [...prevProducts, newProduct];
-    }
+      }
     });
-    
+
     setEditingProduct(null);
     setShowProductDetails(false);
     setShowProductList(true);
@@ -264,19 +267,19 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   const handleSave = async () => {
     console.log('[CreateInvoice Save] Preparing invoice data.');
     // Recalculate total amount based on current invoiceProducts
-     const totalAmount = invoiceProducts.reduce((sum, product) => {
-       // Use calculated amounts if available, otherwise recalculate (safer)
-       const quantity = parseFloat(product.quantity) || 0;
-       const salePrice = parseFloat(product.salePrice) || 0;
-       const gstRate = parseFloat(product.gstRate) || parseFloat(product.gst) || 0; // Handle potential naming difference
-       const cessRate = parseFloat(product.cessRate) || parseFloat(product.cess) || 0;
-       
-       const itemTotal = quantity * salePrice;
-       const gstAmt = itemTotal * (gstRate / 100);
-       const cessAmt = itemTotal * (cessRate / 100);
-       
-       return sum + itemTotal + gstAmt + cessAmt;
-     }, 0);
+    const totalAmount = invoiceProducts.reduce((sum, product) => {
+      // Use calculated amounts if available, otherwise recalculate (safer)
+      const quantity = parseFloat(product.quantity) || 0;
+      const salePrice = parseFloat(product.salePrice) || 0;
+      const gstRate = parseFloat(product.gstRate) || parseFloat(product.gst) || 0; // Handle potential naming difference
+      const cessRate = parseFloat(product.cessRate) || parseFloat(product.cess) || 0;
+
+      const itemTotal = quantity * salePrice;
+      const gstAmt = itemTotal * (gstRate / 100);
+      const cessAmt = itemTotal * (cessRate / 100);
+
+      return sum + itemTotal + gstAmt + cessAmt;
+    }, 0);
 
     // Create a clean buyer data object
     const buyerData = selectedBuyer ? {
@@ -291,7 +294,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
 
     const invoiceData = {
       // Include the id if we are editing
-      id: invoiceId, 
+      id: invoiceId,
       invoiceType,
       invoiceNo: `${invoicePrefix}${invoiceNumber}`, // Combine prefix and number
       invoiceNumber: invoiceNumber, // Keep individual number for reference
@@ -302,6 +305,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       selectedBuyer: buyerData, // Keep for backward compatibility
       buyerData, // This is what InvoiceTemplate expects
       consigneeType,
+      gstType, // Add GST type selection
       products: invoiceProducts, // Pass the current list of products
       transportData: transportData || {},
       otherData: otherData || {},
@@ -313,7 +317,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
     console.log('About to call onSave with data:', invoiceData); // Debug log
     console.log('onSave function type:', typeof onSave); // Debug log
     console.log('onSave function:', onSave); // Debug log
-    
+
     if (typeof originalOnSave === 'function') {
       console.log('Calling originalOnSave function...'); // Debug log
       console.log('originalOnSave function:', originalOnSave); // Debug log
@@ -574,8 +578,8 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
             </div>
             <div className="detail-field">
               <label>Invoice Prefix</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Enter prefix"
                 value={invoicePrefix}
                 onChange={(e) => setInvoicePrefix(e.target.value)}
@@ -583,8 +587,8 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
             </div>
             <div className="detail-field">
               <label>Invoice No.</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Enter invoice number (max 3 digits)"
                 value={invoiceNumber}
                 onChange={handleInvoiceNumberChange}
@@ -730,6 +734,48 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
         </section>
 
         <section className="form-section">
+          <h2>GST Type</h2>
+          <div className="radio-group">
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="gst-type"
+                checked={gstType === 'auto'}
+                onChange={() => setGstType('auto')}
+              />
+              Auto (Based on State)
+            </label>
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="gst-type"
+                checked={gstType === 'igst'}
+                onChange={() => setGstType('igst')}
+              />
+              IGST Only
+            </label>
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="gst-type"
+                checked={gstType === 'sgst'}
+                onChange={() => setGstType('sgst')}
+              />
+              SGST/CGST Only
+            </label>
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="gst-type"
+                checked={gstType === 'both'}
+                onChange={() => setGstType('both')}
+              />
+              Both (IGST + SGST/CGST)
+            </label>
+          </div>
+        </section>
+
+        <section className="form-section">
           <div className="section-header">
             <h2>Product Details</h2>
             {invoiceProducts.length > 0 && (
@@ -738,7 +784,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                   Edit List
                 </button>
                 <button className="action-button see" onClick={() => setShowProductList(true)}>
-                   See List
+                  See List
                 </button>
                 <button className="action-button delete" onClick={() => {
                   if (window.confirm('Are you sure you want to remove all products from this invoice?')) {
@@ -760,21 +806,21 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                   </div>
                   <div className="summary-row">
                     <span className="summary-label">Quantity:</span>
-                     <input 
-                       type="number" 
-                       value={product.quantity || 1} 
-                       onChange={(e) => {
-                         const newQty = parseFloat(e.target.value) || 0;
-                         setInvoiceProducts(currentProducts => 
-                           currentProducts.map(p => 
-                             p.id === product.id ? { ...p, quantity: newQty } : p
-                           )
-                         );
-                       }}
-                       className="quantity-input"
-                       min="0"
-                     />
-                     <span className="summary-value unit-label">{product.unit || 'pcs'}</span>
+                    <input
+                      type="number"
+                      value={product.quantity || 1}
+                      onChange={(e) => {
+                        const newQty = parseFloat(e.target.value) || 0;
+                        setInvoiceProducts(currentProducts =>
+                          currentProducts.map(p =>
+                            p.id === product.id ? { ...p, quantity: newQty } : p
+                          )
+                        );
+                      }}
+                      className="quantity-input"
+                      min="0"
+                    />
+                    <span className="summary-value unit-label">{product.unit || 'pcs'}</span>
                   </div>
                   <div className="summary-row">
                     <span className="summary-label">Price:</span>
@@ -887,13 +933,13 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                 <button className="action-button edit" onClick={() => setShowBankDetails(true)}>
                   Edit
                 </button>
-                <button className="action-button see" style={{background: '#2196f3', color: 'white', marginLeft: 8}} onClick={() => {
+                <button className="action-button see" style={{ background: '#2196f3', color: 'white', marginLeft: 8 }} onClick={() => {
                   setViewBankDetailsOnly(false);
                   setShowBankDetails(true);
                 }}>
                   See
                 </button>
-                <button className="action-button delete" style={{background: '#f44336', color: 'white', marginLeft: 8}} onClick={() => {
+                <button className="action-button delete" style={{ background: '#f44336', color: 'white', marginLeft: 8 }} onClick={() => {
                   if (window.confirm('Are you sure you want to delete bank details?')) {
                     setBankData(null);
                     localStorage.removeItem('savedBankDetails');
@@ -944,7 +990,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
               </div>
             )}
           </div>
-          
+
           <div className="signature-section">
             <div className="toggle-container">
               <label className="toggle-label">
