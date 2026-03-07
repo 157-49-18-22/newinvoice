@@ -105,6 +105,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   const [invoiceNumber, setInvoiceNumber] = useState(initialNum);
 
   const [invoiceProducts, setInvoiceProducts] = useState(initialInvoiceData?.products || []);
+  const [discountPercent, setDiscountPercent] = useState(initialInvoiceData?.discountPercent || 0);
 
   // Other existing state...
   const [showSupplierDetails, setShowSupplierDetails] = useState(false);
@@ -161,6 +162,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       const prefix = invNo.replace(num, '');
       setInvoicePrefix(prefix);
       setInvoiceNumber(num);
+      setDiscountPercent(initialInvoiceData.discountPercent || 0);
     } else {
       // Reset state if initialInvoiceData becomes null (e.g., switching from edit to new)
       console.log('[CreateInvoice Effect] Initial data is null, resetting state.');
@@ -174,6 +176,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       setInvoicePrefix('');
       setInvoiceNumber('');
       setInvoiceProducts([]);
+      setDiscountPercent(0);
     }
   }, [initialInvoiceData]); // Depend on the prop
 
@@ -281,6 +284,11 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       return sum + itemTotal + gstAmt + cessAmt;
     }, 0);
 
+    // Apply discount
+    const parsedDiscount = parseFloat(discountPercent) || 0;
+    const discountAmount = totalAmount * (parsedDiscount / 100);
+    const finalAmount = totalAmount - discountAmount;
+
     // Create a clean buyer data object
     const buyerData = selectedBuyer ? {
       companyName: selectedBuyer.companyName || '',
@@ -300,7 +308,8 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       invoiceNumber: invoiceNumber, // Keep individual number for reference
       invoicePrefix: invoicePrefix, // Keep individual prefix for reference
       date: invoiceDate,
-      amount: totalAmount, // Use recalculated amount
+      amount: finalAmount, // Use recalculated amount after discount
+      discountPercent: discountPercent,
       supplierData: supplierData || {},
       selectedBuyer: buyerData, // Keep for backward compatibility
       buyerData, // This is what InvoiceTemplate expects
@@ -850,6 +859,25 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
               Add Product From List
             </button>
           )}
+        </section>
+
+        <section className="form-section">
+          <div className="section-header">
+            <h2>Discount Details ( Optional )</h2>
+          </div>
+          <div className="detail-row">
+            <div className="detail-field">
+              <label>Discount Percentage (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(e.target.value)}
+                placeholder="Enter discount (%)"
+              />
+            </div>
+          </div>
         </section>
 
         <section className="form-section">

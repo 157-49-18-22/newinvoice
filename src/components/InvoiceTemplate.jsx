@@ -51,7 +51,8 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     transportData = {},
     otherDetails = {},
     consigneeType = effectiveConsigneeType,  // Use the effective consignee type
-    gstType = 'auto' // Default to auto if not specified
+    gstType = 'auto', // Default to auto if not specified
+    discountPercent = 0
   } = data || {};
 
   // Check if it's an inter-state transaction (for auto mode)
@@ -90,7 +91,9 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     const gstRate = safeCalculate(product?.gst);
     return sum + (amount * (gstRate / 100));
   }, 0);
-  const grandTotal = subTotal + totalGST;
+  const totalWithTax = subTotal + totalGST;
+  const discountAmount = totalWithTax * (safeCalculate(discountPercent) / 100);
+  const grandTotal = totalWithTax - discountAmount;
 
   // Additional styles for PDF rendering
   const pdfStyles = forPDF ? {
@@ -418,8 +421,20 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <span>Tax Amount:</span>
             <span>₹{totalGST.toFixed(2)}</span>
           </div>
+          {safeCalculate(discountPercent) > 0 ? (
+            <>
+              <div className="amount-item">
+                <span>Total Amount With Tax:</span>
+                <span>₹{totalWithTax.toFixed(2)}</span>
+              </div>
+              <div className="amount-item">
+                <span>Discount ({discountPercent}%):</span>
+                <span>-₹{discountAmount.toFixed(2)}</span>
+              </div>
+            </>
+          ) : null}
           <div className="amount-item total">
-            <span>Total Amount With Tax:</span>
+            <span>{safeCalculate(discountPercent) > 0 ? 'Grand Total:' : 'Total Amount With Tax:'}</span>
             <span>₹{grandTotal.toFixed(2)}</span>
           </div>
         </div>
