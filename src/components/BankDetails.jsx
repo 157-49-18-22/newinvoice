@@ -5,7 +5,17 @@ import './BankDetails.css';
 const BANK_ACCOUNTS_KEY = 'savedBankAccounts';
 
 const BankDetails = ({ onClose, onSave, initialData, viewOnly = false }) => {
-  const [bankAccounts, setBankAccounts] = useState([]);
+  const [bankAccounts, setBankAccounts] = useState(() => {
+    const saved = localStorage.getItem(BANK_ACCOUNTS_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing saved bank accounts:', e);
+      }
+    }
+    return [];
+  });
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [editing, setEditing] = useState(false);
   const [showView, setShowView] = useState(false);
@@ -19,26 +29,12 @@ const BankDetails = ({ onClose, onSave, initialData, viewOnly = false }) => {
     swiftCode: ''
   });
 
-  // Load accounts from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(BANK_ACCOUNTS_KEY);
-    if (saved) {
-      try {
-        setBankAccounts(JSON.parse(saved));
-      } catch (e) {
-        console.error('Error parsing saved bank accounts:', e);
-      }
-    }
-  }, []);
-
   // Save accounts to localStorage whenever they change
   useEffect(() => {
-    if (bankAccounts.length > 0) {
     try {
       localStorage.setItem(BANK_ACCOUNTS_KEY, JSON.stringify(bankAccounts));
     } catch (e) {
       console.error('Error saving bank accounts:', e);
-      }
     }
   }, [bankAccounts]);
 
