@@ -157,6 +157,14 @@ const InvoiceDashboard = (props) => {
       return invoice.type === 'e-invoice';
     }
     return false;
+  }).sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    if (dateA !== dateB) return dateB - dateA;
+
+    const numA = parseInt(a.number) || 0;
+    const numB = parseInt(b.number) || 0;
+    return numB - numA;
   });
   
   // Import generatePDF
