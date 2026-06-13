@@ -274,12 +274,25 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       // Use calculated amounts if available, otherwise recalculate (safer)
       const quantity = parseFloat(product.quantity) || 0;
       const salePrice = parseFloat(product.salePrice) || 0;
-      const gstRate = parseFloat(product.gstRate) || parseFloat(product.gst) || 0; // Handle potential naming difference
+      const gstRate = parseFloat(product.gstRate) || parseFloat(product.gst) || 0;
       const cessRate = parseFloat(product.cessRate) || parseFloat(product.cess) || 0;
 
-      const itemTotal = quantity * salePrice;
-      const gstAmt = itemTotal * (gstRate / 100);
-      const cessAmt = itemTotal * (cessRate / 100);
+      let itemTotal = quantity * salePrice;
+      let gstAmt = 0;
+      let cessAmt = 0;
+
+      if (product.taxType === 'inclusive') {
+        const totalTaxRate = gstRate + cessRate;
+        const inclusiveAmountPerItem = salePrice;
+        const basePricePerItem = inclusiveAmountPerItem / (1 + (totalTaxRate / 100));
+        
+        itemTotal = quantity * basePricePerItem;
+        gstAmt = quantity * (basePricePerItem * (gstRate / 100));
+        cessAmt = quantity * (basePricePerItem * (cessRate / 100));
+      } else {
+        gstAmt = itemTotal * (gstRate / 100);
+        cessAmt = itemTotal * (cessRate / 100);
+      }
 
       return sum + itemTotal + gstAmt + cessAmt;
     }, 0);
@@ -583,6 +596,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
                 className="date-input"
+                min={new Date().toISOString().split('T')[0]}
               />
             </div>
             <div className="detail-field">
