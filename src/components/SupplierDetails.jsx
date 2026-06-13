@@ -5,7 +5,17 @@ import './SupplierDetails.css';
 const SUPPLIER_KEY = 'savedSuppliers';
 
 const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = false }) => {
-  const [suppliers, setSuppliers] = useState([]);
+  const [suppliers, setSuppliers] = useState(() => {
+    const saved = localStorage.getItem(SUPPLIER_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing saved suppliers:', e);
+      }
+    }
+    return [];
+  });
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [editing, setEditing] = useState(false);
   const [showView, setShowView] = useState(false);
@@ -22,26 +32,12 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
   });
   const [logoPreview, setLogoPreview] = useState(initialData?.logo || null);
 
-  // Load suppliers from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(SUPPLIER_KEY);
-    if (saved) {
-      try {
-        setSuppliers(JSON.parse(saved));
-      } catch (e) {
-        console.error('Error parsing saved suppliers:', e);
-      }
-    }
-  }, []);
-
   // Save suppliers to localStorage whenever they change
   useEffect(() => {
-    if (suppliers.length > 0) {
-      try {
-        localStorage.setItem(SUPPLIER_KEY, JSON.stringify(suppliers));
-      } catch (e) {
-        console.error('Error saving suppliers:', e);
-      }
+    try {
+      localStorage.setItem(SUPPLIER_KEY, JSON.stringify(suppliers));
+    } catch (e) {
+      console.error('Error saving suppliers:', e);
     }
   }, [suppliers]);
 
