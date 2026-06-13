@@ -173,27 +173,27 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 <th className="border-r border-black py-1 w-12">HSN/SAC</th>
                 <th className="border-r border-black py-1 w-8">QTY</th>
                 <th className="border-r border-black py-1 w-8">Unit</th>
-                <th className="border-r border-black py-1 w-14">Rate</th>
-                <th className="border-r border-black py-1 w-16">Taxable Value</th>
+                <th className="border-r border-black py-1" style={{width:'3rem'}}>Rate</th>
+                <th className="border-r border-black py-1" style={{width:'4rem'}}>Taxable Value</th>
                 {showIGST && (
-                  <th className="border-r border-black py-1" colSpan="2">
+                  <th className="border-r border-black py-1" colSpan="2" style={{width:'5rem'}}>
                     <div className="border-b border-black pb-0.5">IGST</div>
-                    <div className="flex justify-around pt-0.5"><span className="w-1/2 border-r border-black">Rate</span><span className="w-1/2">Amount</span></div>
+                    <div style={{display:'flex'}}><span style={{width:'50%',borderRight:'1px solid #000',display:'block',textAlign:'center'}}>Rate</span><span style={{width:'50%',display:'block',textAlign:'center'}}>Amount</span></div>
                   </th>
                 )}
                 {showSGST && (
                   <>
-                    <th className="border-r border-black py-1" colSpan="2">
+                    <th className="border-r border-black py-1" colSpan="2" style={{width:'5rem'}}>
                       <div className="border-b border-black pb-0.5">CGST</div>
-                      <div className="flex justify-around pt-0.5"><span className="w-1/2 border-r border-black">Rate</span><span className="w-1/2">Amount</span></div>
+                      <div style={{display:'flex'}}><span style={{width:'50%',borderRight:'1px solid #000',display:'block',textAlign:'center'}}>Rate</span><span style={{width:'50%',display:'block',textAlign:'center'}}>Amount</span></div>
                     </th>
-                    <th className="border-r border-black py-1" colSpan="2">
+                    <th className="border-r border-black py-1" colSpan="2" style={{width:'5rem'}}>
                       <div className="border-b border-black pb-0.5">SGST</div>
-                      <div className="flex justify-around pt-0.5"><span className="w-1/2 border-r border-black">Rate</span><span className="w-1/2">Amount</span></div>
+                      <div style={{display:'flex'}}><span style={{width:'50%',borderRight:'1px solid #000',display:'block',textAlign:'center'}}>Rate</span><span style={{width:'50%',display:'block',textAlign:'center'}}>Amount</span></div>
                     </th>
                   </>
                 )}
-                <th className="py-1 w-16">Total</th>
+                <th className="py-1" style={{width:'4rem'}}>Total</th>
               </tr>
             </thead>
             <tbody className="text-xxs">
@@ -221,7 +221,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 const sgstAmount = gstAmount / 2;
 
                 return (
-                  <tr key={index} className="border-t border-black h-12">
+                  <tr key={index} className="border-t border-black" style={{height:'2rem'}}>
                     <td className="border-r border-black">{index + 1}</td>
                     <td className="border-r border-black px-2 text-left">
                       <span className="font-semibold block">{product?.name}</span>
@@ -235,8 +235,8 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                     
                     {showIGST && (
                       <>
-                        <td className="border-r border-black">{gstRate.toFixed(2)}%</td>
-                        <td className="border-r border-black">{gstAmount.toFixed(2)}</td>
+                        <td className="border-r border-black" style={{textAlign:'center'}}>{gstRate.toFixed(2)}%</td>
+                        <td className="border-r border-black" style={{textAlign:'center'}}>{gstAmount.toFixed(2)}</td>
                       </>
                     )}
                     {showSGST && (
@@ -254,7 +254,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
               
               {/* Calculate empty rows to fill space */}
               {Array.from({ length: Math.max(0, 3 - products.length) }).map((_, i) => (
-                <tr key={`empty-${i}`} className="border-t border-black h-16">
+                <tr key={`empty-${i}`} className="border-t border-black" style={{height:'2rem'}}>
                   <td className="border-r border-black"></td>
                   <td className="border-r border-black"></td>
                   <td className="border-r border-black"></td>
@@ -269,12 +269,12 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
               ))}
 
               {/* Total Row */}
-              <tr className="border-t border-black bg-invoice-blue font-bold text-xxs">
+              <tr className="border-t border-black font-bold text-xxs">
                 <td className="border-r border-black" colSpan="3">Total</td>
                 <td className="border-r border-black">{totalQuantity}</td>
                 <td className="border-r border-black"></td>
                 <td className="border-r border-black"></td>
-                <td className="border-r border-black">₹ {subTotal.toFixed(2)}</td>
+                <td className="border-r border-black bg-invoice-blue">₹ {subTotal.toFixed(2)}</td>
                 {showIGST && (
                   <>
                     <td className="border-r border-black"></td>
@@ -304,23 +304,23 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           </div>
           {/* Right side: Calculation Breakdown */}
           <div className="text-xxs font-bold">
-            <div className="flex border-b border-black">
+            <div className="flex border-b border-black bg-invoice-blue">
               <div className="w-3/5 p-1 border-r border-black text-left">Total Amount Before Tax</div>
               <div className="w-2/5 p-1 text-right">₹ {subTotal.toFixed(2)}</div>
             </div>
             {showIGST && (
-              <div className="flex border-b border-black">
+              <div className="flex border-b border-black bg-invoice-blue">
                 <div className="w-3/5 p-1 border-r border-black text-right">Add : IGST</div>
                 <div className="w-2/5 p-1 text-right">₹ {totalIGSTAmount.toFixed(2)}</div>
               </div>
             )}
             {showSGST && (
               <>
-                <div className="flex border-b border-black">
+                <div className="flex border-b border-black bg-invoice-blue">
                   <div className="w-3/5 p-1 border-r border-black text-right">Add : CGST</div>
                   <div className="w-2/5 p-1 text-right">₹ {totalCGSTAmount.toFixed(2)}</div>
                 </div>
-                <div className="flex border-b border-black">
+                <div className="flex border-b border-black bg-invoice-blue">
                   <div className="w-3/5 p-1 border-r border-black text-right">Add : SGST</div>
                   <div className="w-2/5 p-1 text-right">₹ {totalSGSTAmount.toFixed(2)}</div>
                 </div>
@@ -336,7 +336,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 <div className="w-2/5 p-1 text-right">-₹ {discountAmount.toFixed(2)}</div>
               </div>
             )}
-            <div className="flex border-b border-black">
+            <div className="flex border-b border-black bg-invoice-blue">
               <div className="w-3/5 p-1 border-r border-black text-left">Round Off Value</div>
               <div className="w-2/5 p-1 text-right">₹ {roundOffValue > 0 ? '+' : ''}{roundOffValue.toFixed(2)}</div>
             </div>
@@ -344,7 +344,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
               <div className="w-3/5 p-1 border-r border-black text-left">Final Invoice Amount</div>
               <div className="w-2/5 p-1 text-right">₹ {finalInvoiceAmount.toFixed(2)}</div>
             </div>
-            <div className="flex">
+            <div className="flex border-b border-black bg-invoice-blue">
               <div className="w-3/5 p-1 border-r border-black text-left">Balance Due</div>
               <div className="w-2/5 p-1 text-right">₹ {finalInvoiceAmount.toFixed(2)}</div>
             </div>
