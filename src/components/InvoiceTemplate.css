@@ -22,7 +22,7 @@
 }
 
 .bg-invoice-blue { 
-  background-color: #D9EAF7 !important; 
+  background-color: #cce4f7 !important; 
   -webkit-print-color-adjust: exact; 
   print-color-adjust: exact; 
 }
@@ -165,7 +165,7 @@ table {
   }
   .bg-invoice-blue {
     background-color: transparent !important;
-    box-shadow: inset 0 0 0 1000px #D9EAF7 !important;
+    box-shadow: inset 0 0 0 1000px #cce4f7 !important;
   }
   .border-b, .border-t, .border-r, .border-y, .border {
     border-color: #000 !important;
