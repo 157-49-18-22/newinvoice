@@ -13,8 +13,9 @@ export const generatePDF = async (invoice) => {
     console.log('Starting PDF generation with invoice:', invoice);
 
     // A4 Portrait: 210mm wide x 297mm tall
-    // At 96 DPI: 210mm ≈ 794px
+    // At 96 DPI: 210mm ≈ 794px, 297mm ≈ 1123px
     const A4_WIDTH_PX = 794;
+    const A4_HEIGHT_PX = 1123;
 
     // Create a temporary off-screen container
     const tempContainer = document.createElement('div');
@@ -22,26 +23,36 @@ export const generatePDF = async (invoice) => {
     tempContainer.style.left = '-10000px';
     tempContainer.style.top = '0';
     tempContainer.style.width = `${A4_WIDTH_PX}px`;
+    tempContainer.style.height = `${A4_HEIGHT_PX}px`; // Force exact A4 height
     tempContainer.style.margin = '0';
     tempContainer.style.padding = '0';
     tempContainer.style.background = 'white';
-    tempContainer.style.overflow = 'visible';
+    tempContainer.style.overflow = 'hidden'; // clip anything overflowing
     document.body.appendChild(tempContainer);
 
-    // Override styles so there's no screen-page padding
+    // Override styles to match exact A4 box
     const styleElement = document.createElement('style');
     styleElement.textContent = `
       .invoice-wrapper {
         padding: 0 !important;
         background-color: white !important;
         display: block !important;
+        width: 100% !important;
+        height: 100% !important;
       }
       .invoice-container {
         box-shadow: none !important;
-        border: 1px solid #000 !important;
+        border: 2px solid #000 !important;
         width: 100% !important;
-        min-height: unset !important;
+        height: 100% !important; 
+        min-height: 100% !important;
         margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      /* Make table container expand to fill available height */
+      .invoice-container > .flex-grow {
+         flex-grow: 1 !important;
       }
       * {
         -webkit-print-color-adjust: exact !important;
@@ -82,15 +93,16 @@ export const generatePDF = async (invoice) => {
       useCORS: true,
       logging: false,
       backgroundColor: 'white',
-      width: tempContainer.scrollWidth,
-      height: tempContainer.scrollHeight,
+      width: A4_WIDTH_PX,
+      height: A4_HEIGHT_PX,
       windowWidth: A4_WIDTH_PX,
+      windowHeight: A4_HEIGHT_PX,
     });
 
     console.log(`Canvas: ${canvas.width}px x ${canvas.height}px`);
 
     // A4 Portrait dimensions in mm
-    const PDF_WIDTH_MM  = 210;
+    const PDF_WIDTH_MM = 210;
     const PDF_HEIGHT_MM = 297;
 
     // Create PDF (portrait A4)
@@ -101,28 +113,14 @@ export const generatePDF = async (invoice) => {
       compress: true,
     });
 
-    // Scale canvas proportionally to fit BOTH width AND height of one A4 page
-    // We determine how many canvas-pixels = 1mm, then check both directions
-    const scaleByWidth  = PDF_WIDTH_MM  / canvas.width;   // mm per px based on width
-    const scaleByHeight = PDF_HEIGHT_MM / canvas.height;  // mm per px based on height
-
-    // Use the smaller scale so the image fits within both dimensions
-    const scale = Math.min(scaleByWidth, scaleByHeight);
-
-    const imgWidthMm  = canvas.width  * scale;
-    const imgHeightMm = canvas.height * scale;
-
-    // Center horizontally if narrower than page, align to top
-    const xMm = (PDF_WIDTH_MM - imgWidthMm) / 2;
-    const yMm = 0;
-
+    // Since we forced the canvas to exactly match A4 ratio (794x1123), it fits perfectly
     pdf.addImage(
       canvas.toDataURL('image/jpeg', 1.0),
       'JPEG',
-      xMm,
-      yMm,
-      imgWidthMm,
-      imgHeightMm,
+      0,
+      0,
+      PDF_WIDTH_MM,
+      PDF_HEIGHT_MM
     );
 
     pdf.save(`Invoice-${invoice.invoiceNo || invoice.number || '1'}.pdf`);
