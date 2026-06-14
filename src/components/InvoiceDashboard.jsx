@@ -11,8 +11,8 @@ const formatAmount = (amount) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount).replace('₹', '₹ ');
 };
 
@@ -238,7 +238,6 @@ const InvoiceDashboard = (props) => {
               <div className="invoice-main" style={{ cursor: 'default' }}>
                 <div className="invoice-title">
                   <h3>{getInvoiceTitle(invoice)}</h3>
-                  <span className="amount">{formatAmount(invoice.amount)}</span>
                 </div>
                 <div className="invoice-details">
                   <div className="invoice-number">{invoice.number || invoice.id}</div>
