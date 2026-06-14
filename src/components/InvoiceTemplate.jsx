@@ -164,7 +164,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
         </div>
 
         {/* ItemsTable */}
-        <div className="border-b border-black break-inside-avoid">
+        <div className="border-b border-black break-inside-avoid flex-grow">
           <table className="w-full text-center border-collapse">
             <thead className="bg-invoice-blue text-xxs font-bold">
               <tr>
@@ -371,7 +371,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
         )}
 
         {/* TermsAndSignature */}
-        <div className="grid grid-cols-2 min-h-[140px] break-inside-avoid">
+        <div className="grid grid-cols-2 min-h-[140px] break-inside-avoid mt-auto">
           <div className="border-r border-black p-2">
             <h4 className="text-xxs font-bold underline mb-1">Terms And Conditions</h4>
             <p className="text-[0.6rem]">1. This is an electronically generated document. 2. All disputes are subject to {supplierData?.city || 'Local'} jurisdiction.</p>
