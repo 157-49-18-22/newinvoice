@@ -111,8 +111,8 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           <header className="p-4 border-b border-black flex items-center" style={{ minHeight: '100px' }}>
             <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
               {supplierData?.logo && (
-                <div className="bg-black p-2 inline-block">
-                  <img alt="Logo" className="h-16 w-16 object-contain grayscale invert" src={supplierData.logo} />
+                <div className="inline-block px-4">
+                  <img alt="Logo" className="h-16 w-16 object-contain" src={supplierData.logo} />
                 </div>
               )}
             </div>
