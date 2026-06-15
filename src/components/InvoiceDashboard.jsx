@@ -226,6 +226,7 @@ const InvoiceDashboard = (props) => {
             <div 
               key={invoice.id} 
               className="invoice-card"
+              style={{ zIndex: openMenuId === invoice.id ? 50 : 1 }}
             >
               <div className="invoice-main" style={{ cursor: 'default' }}>
                 <div className="invoice-title">
