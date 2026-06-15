@@ -159,13 +159,12 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
             width: '96px', height: '96px', borderRight: B,
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px', flexShrink: 0,
           }}>
-            {/* w-16 h-16 bg-blue-900 rounded flex items-center justify-center */}
             <div style={{
-              width: '64px', height: '64px', background: BLUE900, borderRadius: '4px',
+              width: '64px', height: '64px', background: supplier.logo ? 'transparent' : BLUE900, borderRadius: '4px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {supplier.logo
-                ? <img alt="Logo" src={supplier.logo} style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'grayscale(1) invert(1)' }} />
+                ? <img alt="Logo" src={supplier.logo} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                 : /* text-white text-xs font-bold text-center leading-tight */
                   <span style={{ color: WHITE, fontSize: '12px', fontWeight: 700, textAlign: 'center', lineHeight: 1.25 }}>
                     {(supplier.name || supplier.companyName || 'MAYDIV INFOTECH').split(' ').slice(0,2).join('\n').split('\n').map((w,i) => <span key={i} style={{ display: 'block' }}>{w}</span>)}
