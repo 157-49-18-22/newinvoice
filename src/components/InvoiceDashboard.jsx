@@ -7,14 +7,6 @@ import DottedArrow from './DottedArrow';
 // import { generatePDF } from '../utils/generatePDF';
 import './InvoiceDashboard.css';
 
-const formatAmount = (amount) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount).replace('₹', '₹ ');
-};
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
