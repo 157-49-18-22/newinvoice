@@ -24,7 +24,6 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     date = new Date(),
     products = [],
     supplierData = {},
-    otherDetails = {},
     gstType = 'auto',
     discountPercent = 0
   } = data || {};
