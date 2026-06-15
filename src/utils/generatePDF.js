@@ -2,110 +2,518 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import InvoiceTemplate from '../components/InvoiceTemplate';
 
 /**
- * Generate a PDF invoice — always fits on ONE single portrait A4 page
- * @param {Object} invoice - The invoice data object
+ * Exact pixel-match of InvoiceDocument (Code 2) as a dynamic component.
+ * All Tailwind classes converted to precise inline styles.
+ *
+ * Tailwind reference used:
+ *   text-xs       = 12px / line-height 16px
+ *   text-sm       = 14px / line-height 20px
+ *   text-lg       = 18px / line-height 28px
+ *   font-bold     = font-weight 700
+ *   bg-white      = #ffffff
+ *   bg-blue-100   = #dbeafe
+ *   bg-blue-900   = #1e3a8a
+ *   text-white    = #ffffff
+ *   text-gray-600 = #4b5563
+ *   text-blue-700 = #1d4ed8
+ *   border-black  = #000000
+ *   p-6           = 24px
+ *   p-3           = 12px
+ *   p-2           = 8px
+ *   p-1           = 4px
+ *   px-3 py-1     = padding: 4px 12px
+ *   px-1 py-1     = padding: 4px 4px
+ *   gap-1         = 4px
+ *   gap-2         = 8px
+ *   mt-1          = 4px
+ *   mt-2          = 8px
+ *   mt-4          = 16px
+ *   mt-8          = 32px
+ *   mb-2          = 8px
+ *   h-8           = 32px
+ *   w-8           = 32px
+ *   w-12          = 48px
+ *   w-14          = 56px
+ *   w-16          = 64px
+ *   w-24          = 96px
+ *   h-24          = 96px
+ *   w-64          = 256px
+ *   max-w-4xl     = 896px (we cap at 794px for A4)
+ *   shadow-sm     = box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05)
+ *   leading-tight = line-height: 1.25
+ *   -mt-4         = margin-top: -16px
+ */
+const InvoiceDocumentDynamic = ({ invoice }) => {
+  const supplier = invoice?.supplierData || {};
+  const buyer    = invoice?.buyerData || invoice?.selectedBuyer || {};
+  const products = invoice?.products || [];
+  const bankData = invoice?.bankData || {};
+  const discountPercent = parseFloat(invoice?.discountPercent || 0);
+
+  // GST logic
+  const isInterState = supplier?.state !== buyer?.state;
+  const gstType = invoice?.gstType || 'auto';
+  let showIGST = false, showSGST = false;
+  if      (gstType === 'auto') { showIGST = isInterState; showSGST = !isInterState; }
+  else if (gstType === 'igst') { showIGST = true; }
+  else if (gstType === 'sgst') { showSGST = true; }
+  else if (gstType === 'both') { showIGST = true; showSGST = true; }
+
+  const safe = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+
+  let subTotal = 0, totalGST = 0, totalIGST = 0, totalCGST = 0, totalSGST = 0, totalQty = 0;
+
+  const rows = products.map((p) => {
+    const qty     = safe(p.quantity);
+    const rawRate = safe(p.salePrice);
+    const gstRate = safe(p.gst);
+    const cessRate = safe(p.cess || 0);
+    let rate = rawRate, amount = 0, gstAmount = 0;
+    if (p.taxType === 'inclusive') {
+      rate      = rawRate / (1 + ((gstRate + cessRate) / 100));
+      amount    = qty * rate;
+      gstAmount = amount * (gstRate / 100);
+    } else {
+      amount    = qty * rate;
+      gstAmount = amount * (gstRate / 100);
+    }
+    subTotal  += amount;
+    totalGST  += gstAmount;
+    totalQty  += qty;
+    if (showIGST) totalIGST += gstAmount;
+    if (showSGST) { totalCGST += gstAmount / 2; totalSGST += gstAmount / 2; }
+    return { qty, rate, amount, gstAmount, gstRate, cgst: gstAmount / 2, sgst: gstAmount / 2, p };
+  });
+
+  const totalWithTax    = subTotal + totalGST;
+  const discountAmount  = totalWithTax * (discountPercent / 100);
+  const grandTotal      = totalWithTax - discountAmount;
+  const roundOff        = Math.round(grandTotal) - grandTotal;
+  const finalAmount     = Math.round(grandTotal);
+
+  // en-IN locale formatting (e.g. 1,23,456.00)
+  const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const formatDate = (d) => {
+    const date = new Date(d);
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('/').join('-');
+  };
+
+  // Number to words (handles crores)
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
+    'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tensW = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const numToWords = (n) => {
+    if (n === 0) return 'Zero';
+    const conv = (num) => {
+      if (num < 20)       return ones[num];
+      if (num < 100)      return tensW[Math.floor(num/10)] + (num%10 ? ' '+ones[num%10] : '');
+      if (num < 1000)     return ones[Math.floor(num/100)] + ' Hundred' + (num%100 ? ' '+conv(num%100) : '');
+      if (num < 100000)   return conv(Math.floor(num/1000)) + ' Thousand' + (num%1000 ? ' '+conv(num%1000) : '');
+      if (num < 10000000) return conv(Math.floor(num/100000)) + ' Lakh' + (num%100000 ? ' '+conv(num%100000) : '');
+      return conv(Math.floor(num/10000000)) + ' Crore' + (num%10000000 ? ' '+conv(num%10000000) : '');
+    };
+    return conv(Math.abs(Math.round(n)));
+  };
+
+  // ─── Exact Tailwind → inline style map ────────────────────────────────────
+  const FONT  = "'Arial', 'Helvetica Neue', Helvetica, sans-serif";
+  const BLACK = '#000000';
+  const BLUE100  = '#dbeafe';  // bg-blue-100
+  const BLUE900  = '#1e3a8a';  // bg-blue-900
+  const GRAY600  = '#4b5563';  // text-gray-600
+  const BLUE700  = '#1d4ed8';  // text-blue-700
+  const WHITE    = '#ffffff';
+
+  // border shorthand
+  const B = `1px solid ${BLACK}`;
+
+  return (
+    // bg-white p-6 max-w-4xl mx-auto shadow-sm
+    <div style={{
+      background: WHITE,
+      padding: '24px',
+      maxWidth: '794px',
+      margin: '0 auto',
+      boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+      fontFamily: FONT,
+      color: BLACK,
+      boxSizing: 'border-box',
+    }}>
+
+      {/* text-center text-xs text-gray-600 mb-2 */}
+      <div style={{ textAlign: 'center', fontSize: '12px', lineHeight: '16px', color: GRAY600, marginBottom: '8px' }}>
+        Thank-you for doing business with us
+      </div>
+
+      {/* border border-black */}
+      <div style={{ border: B }}>
+
+        {/* ── Seller Info: flex border-b border-black ── */}
+        <div style={{ display: 'flex', borderBottom: B }}>
+
+          {/* w-24 h-24 border-r border-black flex items-center justify-center p-2 */}
+          <div style={{
+            width: '96px', height: '96px', borderRight: B,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px', flexShrink: 0,
+          }}>
+            {/* w-16 h-16 bg-blue-900 rounded flex items-center justify-center */}
+            <div style={{
+              width: '64px', height: '64px', background: BLUE900, borderRadius: '4px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {supplier.logo
+                ? <img alt="Logo" src={supplier.logo} style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'grayscale(1) invert(1)' }} />
+                : /* text-white text-xs font-bold text-center leading-tight */
+                  <span style={{ color: WHITE, fontSize: '12px', fontWeight: 700, textAlign: 'center', lineHeight: 1.25 }}>
+                    {(supplier.name || supplier.companyName || 'MAYDIV INFOTECH').split(' ').slice(0,2).join('\n').split('\n').map((w,i) => <span key={i} style={{ display: 'block' }}>{w}</span>)}
+                  </span>
+              }
+            </div>
+          </div>
+
+          {/* flex-1 p-3 text-center */}
+          <div style={{ flex: 1, padding: '12px', textAlign: 'center' }}>
+            {/* font-bold text-lg */}
+            <h1 style={{ fontWeight: 700, fontSize: '18px', lineHeight: '28px', margin: 0 }}>
+              {supplier.name || supplier.companyName || 'MAYDIV INFOTECH'}
+            </h1>
+            {/* text-xs */}
+            <p style={{ fontSize: '12px', lineHeight: '16px', margin: '2px 0 0' }}>
+              {[supplier.address, supplier.city, supplier.state, supplier.pincode].filter(Boolean).join(', ')}
+            </p>
+            {/* flex items-center justify-center gap-2 mt-1 text-xs */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '4px', fontSize: '12px', lineHeight: '16px' }}>
+              {supplier.phone && <span>📞 {supplier.phone}</span>}
+              {supplier.email && <span>✉ {supplier.email}</span>}
+            </div>
+            {/* flex items-center justify-center gap-2 mt-1 text-xs */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '4px', fontSize: '12px', lineHeight: '16px' }}>
+              <span>GSTIN : {supplier.gstin}</span>
+              {supplier.stateCode &&
+                <span style={{ border: B, padding: '0 4px' }}>State Code : {supplier.stateCode}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* ── Tax Invoice Title: bg-blue-100 border-b border-black py-2 text-center ── */}
+        <div style={{ background: BLUE100, borderBottom: B, padding: '8px 8px', textAlign: 'center', position: 'relative' }}>
+          {/* font-bold text-lg */}
+          <h2 style={{ fontWeight: 700, fontSize: '18px', lineHeight: '28px', margin: 0 }}>
+            {invoice.invoiceType === 'bill-of-supply' ? 'BILL OF SUPPLY' : 'TAX INVOICE'}
+          </h2>
+          {/* text-xs text-right pr-2 -mt-4  →  absolute top-right */}
+          <p style={{ fontSize: '12px', lineHeight: '16px', margin: 0, position: 'absolute', right: '8px', top: '8px' }}>
+            Original For Recipient
+          </p>
+        </div>
+
+        {/* ── Invoice Details: border-b border-black ── */}
+        <div style={{ borderBottom: B }}>
+          {[
+            ['Invoice Number', invoice.invoiceNumber || invoice.number],
+            ['Invoice Date',   formatDate(invoice.date)],
+            ['State',          (supplier.state || '').toUpperCase()],
+            ['Reverse Charge', 'NO'],
+          ].map(([label, value], i, arr) => (
+            <div key={label} style={{
+              display: 'flex', justifyContent: 'space-between',
+              padding: '4px 12px', fontSize: '12px', lineHeight: '16px',
+              borderBottom: i < arr.length - 1 ? `1px solid #e5e7eb` : 'none',
+            }}>
+              <span>{label}</span>
+              <span style={{ fontWeight: 700 }}>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Receiver Header: bg-blue-100 border-b border-black py-1 text-center ── */}
+        <div style={{ background: BLUE100, borderBottom: B, padding: '4px', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', lineHeight: '16px', fontWeight: 700, margin: 0 }}>
+            Details of Receiver | Billed to
+          </p>
+        </div>
+
+        {/* ── Receiver Details: border-b border-black p-3 text-xs ── */}
+        <div style={{ borderBottom: B, padding: '12px', fontSize: '12px', lineHeight: '16px' }}>
+          <p style={{ margin: 0 }}><span style={{ fontWeight: 700 }}>Name:</span> {buyer.name || buyer.companyName}</p>
+          <p style={{ margin: '4px 0 0' }}><span style={{ fontWeight: 700 }}>Address:</span> {buyer.address}</p>
+          <p style={{ margin: '4px 0 0' }}>
+            <span style={{ fontWeight: 700 }}>GSTIN:</span> {buyer.gstin || 'Not specified'}
+            {buyer.stateCode && <span style={{ border: B, padding: '0 4px', marginLeft: '4px' }}>State Code : {buyer.stateCode}</span>}
+          </p>
+          <p style={{ margin: '4px 0 0' }}><span style={{ fontWeight: 700 }}>State:</span> {buyer.state}</p>
+        </div>
+
+        {/* ── Items Table: w-full border-collapse text-xs ── */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', lineHeight: '16px' }}>
+          <thead>
+            <tr style={{ background: BLUE100 }}>
+              {/* Each th: border border-black px-1 py-1 */}
+              <th style={{ border: B, padding: '4px', width: '32px', fontWeight: 700 }}>Sr. No.</th>
+              <th style={{ border: B, padding: '4px', textAlign: 'left', fontWeight: 700 }}>Name of Product</th>
+              <th style={{ border: B, padding: '4px', width: '48px', fontWeight: 700 }}>HSN/SAC</th>
+              <th style={{ border: B, padding: '4px', width: '32px', fontWeight: 700 }}>QTY</th>
+              <th style={{ border: B, padding: '4px', width: '32px', fontWeight: 700 }}>Unit</th>
+              <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>Rate</th>
+              <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>Taxable<br/>Value</th>
+              {showIGST && <>
+                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>IGST<br/>Rate</th>
+                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>IGST<br/>Amount</th>
+              </>}
+              {showSGST && <>
+                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>CGST<br/>Rate</th>
+                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>CGST<br/>Amount</th>
+                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>SGST<br/>Rate</th>
+                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>SGST<br/>Amount</th>
+              </>}
+              <th style={{ border: B, padding: '4px', width: '64px', fontWeight: 700 }}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ qty, rate, amount, gstAmount, gstRate, cgst, sgst, p }, i) => (
+              <tr key={i}>
+                <td style={{ border: B, padding: '4px', textAlign: 'center' }}>{i + 1}</td>
+                <td style={{ border: B, padding: '4px', textAlign: 'left' }}>
+                  <span style={{ fontWeight: 700 }}>{p.name}</span>
+                  {p.description && <><br/><span style={{ fontSize: '12px' }}>{p.description}</span></>}
+                </td>
+                <td style={{ border: B, padding: '4px', textAlign: 'center' }}>{p.hsn}</td>
+                <td style={{ border: B, padding: '4px', textAlign: 'center' }}>{qty}</td>
+                <td style={{ border: B, padding: '4px', textAlign: 'center' }}>{p.unit || ''}</td>
+                <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{rate.toFixed(1)}</td>
+                <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(amount)}</td>
+                {showIGST && <>
+                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{gstRate.toFixed(2)}%</td>
+                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(gstAmount)}</td>
+                </>}
+                {showSGST && <>
+                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{(gstRate/2).toFixed(2)}%</td>
+                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(cgst)}</td>
+                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{(gstRate/2).toFixed(2)}%</td>
+                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(sgst)}</td>
+                </>}
+                <td style={{ border: B, padding: '4px', textAlign: 'right' }}>₹ {fmt(amount + gstAmount)}</td>
+              </tr>
+            ))}
+
+            {/* Empty spacer row — h-8 = 32px */}
+            <tr>
+              {Array.from({ length: 7 + (showIGST ? 2 : 0) + (showSGST ? 4 : 0) }).map((_, i) => (
+                <td key={i} style={{ border: B, padding: '4px', height: '32px' }}></td>
+              ))}
+            </tr>
+
+            {/* Total row — bg-blue-100 */}
+            <tr style={{ background: BLUE100 }}>
+              <td style={{ border: B, padding: '4px' }}></td>
+              <td style={{ border: B, padding: '4px', textAlign: 'center', fontWeight: 700 }}>Total</td>
+              <td style={{ border: B, padding: '4px' }}></td>
+              <td style={{ border: B, padding: '4px', textAlign: 'center', fontWeight: 700 }}>{totalQty}</td>
+              <td style={{ border: B, padding: '4px' }}></td>
+              <td style={{ border: B, padding: '4px' }}></td>
+              <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(subTotal)}</td>
+              {showIGST && <>
+                <td style={{ border: B, padding: '4px' }}></td>
+                <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalIGST)}</td>
+              </>}
+              {showSGST && <>
+                <td style={{ border: B, padding: '4px' }}></td>
+                <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalCGST)}</td>
+                <td style={{ border: B, padding: '4px' }}></td>
+                <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalSGST)}</td>
+              </>}
+              <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalWithTax)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* ── Bottom Section + Terms: single outer border-t, two rows of flex columns ── */}
+        <div style={{ borderTop: B }}>
+
+          {/* Row 1: Amount in words / Bank  |  Totals */}
+          <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: B }}>
+
+            {/* Left col */}
+            <div style={{ flex: 1, borderRight: B, display: 'flex', flexDirection: 'column' }}>
+
+              {/* Amount in words */}
+              <div style={{ padding: '8px', textAlign: 'center', borderBottom: B }}>
+                <p style={{ fontSize: '12px', lineHeight: '16px', fontWeight: 700, margin: 0 }}>
+                  Total Invoice Amount in words
+                </p>
+                <p style={{ fontSize: '12px', lineHeight: '16px', margin: '4px 0 0' }}>
+                  {numToWords(finalAmount)} Rupees Only /-
+                </p>
+              </div>
+
+              {/* Bank details */}
+              {bankData?.bankName && (
+                <div style={{ padding: '8px', flex: 1 }}>
+                  <p style={{ fontSize: '12px', lineHeight: '16px', fontWeight: 700, color: BLUE700, margin: '0 0 4px' }}>
+                    🏦 Bank and Payment Details
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: '16px', rowGap: '3px', fontSize: '12px', lineHeight: '16px' }}>
+                    <span>Account Name</span>
+                    <span style={{ fontWeight: 700, textAlign: 'right' }}>{bankData.accountHolderName || supplier.name || supplier.companyName}</span>
+                    <span>Account No.</span>
+                    <span style={{ fontWeight: 700, textAlign: 'right' }}>{bankData.accountNumber}</span>
+                    <span>IFSC Code</span>
+                    <span style={{ fontWeight: 700, textAlign: 'right' }}>{bankData.ifscCode}</span>
+                    <span>Bank Name</span>
+                    <span style={{ fontWeight: 700, textAlign: 'right' }}>{bankData.bankName}</span>
+                    {bankData.branchName && <>
+                      <span>Branch Name</span>
+                      <span style={{ fontWeight: 700, textAlign: 'right' }}>{bankData.branchName}</span>
+                    </>}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right col — totals panel, width matches Code 2's w-64 */}
+            <div style={{ width: '256px', flexShrink: 0, fontSize: '12px', lineHeight: '16px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', borderBottom: B }}>
+                <span style={{ flex: 1, padding: '4px' }}>Total Amount Before Tax</span>
+                <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(subTotal)}</span>
+              </div>
+              {showIGST && (
+                <div style={{ display: 'flex', borderBottom: B }}>
+                  <span style={{ flex: 1, padding: '4px' }}>Add : IGST</span>
+                  <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalIGST)}</span>
+                </div>
+              )}
+              {showSGST && <>
+                <div style={{ display: 'flex', borderBottom: B }}>
+                  <span style={{ flex: 1, padding: '4px' }}>Add : CGST</span>
+                  <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalCGST)}</span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: B }}>
+                  <span style={{ flex: 1, padding: '4px' }}>Add : SGST</span>
+                  <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalSGST)}</span>
+                </div>
+              </>}
+              <div style={{ display: 'flex', borderBottom: B }}>
+                <span style={{ flex: 1, padding: '4px' }}>Total Tax Amount</span>
+                <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalGST)}</span>
+              </div>
+              {discountPercent > 0 && (
+                <div style={{ display: 'flex', borderBottom: B }}>
+                  <span style={{ flex: 1, padding: '4px' }}>Discount ({discountPercent}%)</span>
+                  <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>-₹ {fmt(discountAmount)}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', borderBottom: B }}>
+                <span style={{ flex: 1, padding: '4px' }}>Round Off Value</span>
+                <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {roundOff.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', borderBottom: B }}>
+                <span style={{ flex: 1, padding: '4px', fontWeight: 700 }}>Final Invoice Amount</span>
+                <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(finalAmount)}</span>
+              </div>
+              <div style={{ display: 'flex', flex: 1 }}>
+                <span style={{ flex: 1, padding: '4px', fontWeight: 700 }}>Balance Due</span>
+                <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(finalAmount)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Terms  |  Signature — same two-column split, aligned with row above */}
+          <div style={{ display: 'flex', alignItems: 'stretch' }}>
+
+            {/* Terms — flex-1 matches left col above */}
+            <div style={{ flex: 1, borderRight: B, padding: '8px' }}>
+              <p style={{ fontSize: '12px', lineHeight: '16px', fontWeight: 700, margin: 0 }}>Terms And Conditions</p>
+              <p style={{ fontSize: '12px', lineHeight: '16px', margin: '4px 0 0' }}>
+                1. This is an electronically generated document.{' '} <br />
+                2. All disputes are subject to {supplier.city || 'Local'} jurisdiction.
+              </p>
+            </div>
+
+            {/* Signature — w-64 = 256px matches right col above */}
+            <div style={{ width: '256px', flexShrink: 0, padding: '8px', textAlign: 'center' }}>
+              <p style={{ fontSize: '12px', lineHeight: '16px', margin: 0 }}>
+                Certified that the particular given above are true and correct
+              </p>
+              <p style={{ fontSize: '12px', lineHeight: '16px', fontWeight: 700, marginTop: '4px' }}>
+                For, {supplier.name || supplier.companyName || 'MAYDIV INFOTECH'}
+              </p>
+              {invoice.includeSignature && invoice.signatureImage && (
+                <img src={invoice.signatureImage} alt="Signature" style={{ maxHeight: '48px', margin: '8px auto', display: 'block' }} />
+              )}
+              <p style={{ fontSize: '12px', lineHeight: '16px', marginTop: '32px' }}>Authorised Signatory</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>{/* end border border-black */}
+
+      {/* Footer: text-center text-xs text-gray-600 mt-2 */}
+      <div style={{ textAlign: 'center', fontSize: '12px', lineHeight: '16px', color: GRAY600, marginTop: '8px' }}>
+        Thankyou for your business
+      </div>
+
+    </div>
+  );
+};
+
+/**
+ * Generate a PDF invoice — always fits on ONE single portrait A4 page.
+ * Renders InvoiceDocumentDynamic which is an exact inline-style replica of
+ * InvoiceDocument (Code 2) — same font, colors, spacing, and layout.
+ *
+ * @param {Object} invoice - The invoice data object (same shape as InvoiceTemplate expects)
  */
 export const generatePDF = async (invoice) => {
   try {
     console.log('Starting PDF generation with invoice:', invoice);
 
-    // A4 Portrait: 210mm wide x 297mm tall
-    // At 96 DPI: 210mm ≈ 794px, 297mm ≈ 1123px
-    const A4_WIDTH_PX = 794;
+    // A4 Portrait at 96 DPI: 210mm × 297mm
+    const A4_WIDTH_PX  = 794;
     const A4_HEIGHT_PX = 1123;
 
-    // Create a temporary off-screen container
     const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'fixed';
-    tempContainer.style.left = '-10000px';
-    tempContainer.style.top = '0';
-    tempContainer.style.width = `${A4_WIDTH_PX}px`;
-    tempContainer.style.height = `${A4_HEIGHT_PX}px`; // Force exact A4 height
-    tempContainer.style.margin = '0';
-    tempContainer.style.padding = '0';
-    tempContainer.style.background = 'white';
-    tempContainer.style.overflow = 'hidden'; // clip anything overflowing
+    tempContainer.style.cssText = [
+      'position:fixed',
+      'left:-10000px',
+      'top:0',
+      `width:${A4_WIDTH_PX}px`,
+      `height:${A4_HEIGHT_PX}px`,
+      'background:white',
+      'overflow:hidden',
+      'margin:0',
+      'padding:0',
+    ].join(';');
     document.body.appendChild(tempContainer);
 
-    // Override styles to match exact A4 box
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-      .invoice-wrapper {
-        padding: 0 !important;
-        background-color: white !important;
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-      }
-      .invoice-container {
-        box-shadow: none !important;
-        border: none !important;
-        width: 100% !important;
-        height: 100% !important; 
-        min-height: 100% !important;
-        margin: 0 !important;
-        display: flex !important;
-        flex-direction: column !important;
-      }
-      /* Make table container expand to fill available height */
-      .invoice-container > .flex-grow {
-         flex-grow: 1 !important;
-      }
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      .bg-invoice-blue {
-        background-color: transparent !important;
-        box-shadow: inset 0 0 0 1000px #cce4f7 !important;
-      }
-      .border-b, .border-t, .border-r, .border-y, .border {
-        border-color: #000 !important;
-        border-width: 1px !important;
-        border-style: solid !important;
-      }
-    `;
-    tempContainer.appendChild(styleElement);
-
-    // Render the invoice template
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       ReactDOM.render(
-        <InvoiceTemplate
-          data={invoice}
-          bankData={invoice.bankData}
-          forPDF={true}
-        />,
+        <InvoiceDocumentDynamic invoice={invoice} />,
         tempContainer,
-        () => {
-          setTimeout(resolve, 1200);
-        }
+        () => setTimeout(resolve, 1000),
       );
     });
 
     console.log('Template rendering complete');
 
-    // Capture at 3x resolution for sharpness
+    // Capture at 3× for sharpness
     const canvas = await html2canvas(tempContainer, {
       scale: 3,
       useCORS: true,
       logging: false,
       backgroundColor: 'white',
-      width: A4_WIDTH_PX,
-      height: A4_HEIGHT_PX,
-      windowWidth: A4_WIDTH_PX,
+      width:        A4_WIDTH_PX,
+      height:       A4_HEIGHT_PX,
+      windowWidth:  A4_WIDTH_PX,
       windowHeight: A4_HEIGHT_PX,
     });
 
-    console.log(`Canvas: ${canvas.width}px x ${canvas.height}px`);
+    console.log(`Canvas: ${canvas.width}px × ${canvas.height}px`);
 
-    // A4 Portrait dimensions in mm
-    const PDF_WIDTH_MM = 210;
-    const PDF_HEIGHT_MM = 297;
-
-    // Create PDF (portrait A4)
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -113,23 +521,13 @@ export const generatePDF = async (invoice) => {
       compress: true,
     });
 
-    // Since we forced the canvas to exactly match A4 ratio (794x1123), it fits perfectly
-    pdf.addImage(
-      canvas.toDataURL('image/jpeg', 1.0),
-      'JPEG',
-      0,
-      0,
-      PDF_WIDTH_MM,
-      PDF_HEIGHT_MM
-    );
+    // Canvas matches A4 ratio exactly → fills page perfectly, no scaling artifacts
+    pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 210, 297);
+    pdf.save(`Invoice-${invoice.invoiceNumber || invoice.number || '1'}.pdf`);
 
-    pdf.save(`Invoice-${invoice.invoiceNo || invoice.number || '1'}.pdf`);
+    console.log('PDF saved — single portrait A4 page');
 
-    console.log('PDF generated successfully — single page portrait');
-
-    // Cleanup
     document.body.removeChild(tempContainer);
-
     return true;
   } catch (error) {
     console.error('Error generating PDF:', error);
