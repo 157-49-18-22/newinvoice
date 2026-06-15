@@ -92,12 +92,11 @@
 
 /* Invoice Type Section */
 .invoice-type {
-margin-top: 20px;
-  background: #FFD700;;
+  background: #FFD700;
   padding: 2rem;
-  border-radius: 16px;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 16px 16px 0 0;
+  margin-bottom: 0;
+  margin-top: 20px;
   display: flex;
   gap: 2rem;
 }
@@ -107,7 +106,7 @@ margin-top: 20px;
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: white; /* Made white instead of #f8f9fa to visually pop better on yellow */
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -127,11 +126,13 @@ margin-top: 20px;
 }
 
 /* Invoice Details Section */
-.invoice-details {
-  background: white;
-  padding: 2rem;
-  border-radius: 16px;
+.create-invoice .invoice-details {
+  display: block;
+  background: #FFD700;
+  padding: 0 2rem 2rem 2rem;
+  border-radius: 0 0 16px 16px;
   margin-bottom: 2rem;
+  margin-top: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
@@ -399,9 +400,7 @@ margin-top: 20px;
   margin-top: 2rem;
 }
 
-.invoice-type + .invoice-details {
-  margin-top: 2rem;
-}
+
 
 /* Animation for new inputs */
 @keyframes slideDown {
@@ -420,27 +419,27 @@ margin-top: 20px;
 }
 
 /* Custom scrollbar for the section */
-.invoice-details {
+.create-invoice .invoice-details {
   scrollbar-width: thin;
   scrollbar-color: #CBD5E0 #F7FAFC;
 }
 
-.invoice-details::-webkit-scrollbar {
+.create-invoice .invoice-details::-webkit-scrollbar {
   width: 8px;
 }
 
-.invoice-details::-webkit-scrollbar-track {
+.create-invoice .invoice-details::-webkit-scrollbar-track {
   background: #F7FAFC;
   border-radius: 4px;
 }
 
-.invoice-details::-webkit-scrollbar-thumb {
+.create-invoice .invoice-details::-webkit-scrollbar-thumb {
   background-color: #CBD5E0;
   border-radius: 4px;
   border: 2px solid #F7FAFC;
 }
 
-.invoice-details::-webkit-scrollbar-thumb:hover {
+.create-invoice .invoice-details::-webkit-scrollbar-thumb:hover {
   background-color: #A0AEC0;
 }
 
