@@ -42,7 +42,7 @@ export const generatePDF = async (invoice) => {
       }
       .invoice-container {
         box-shadow: none !important;
-        border: 2px solid #000 !important;
+        border: none !important;
         width: 100% !important;
         height: 100% !important; 
         min-height: 100% !important;
