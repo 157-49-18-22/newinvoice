@@ -147,18 +147,15 @@ const InvoiceDashboard = (props) => {
     };
   }, [openMenuId]);
 
-  // Set default active tab
-  const [activeTab, setActiveTab] = useState('all'); // eslint-disable-line
-  
   // Filter invoices based on active tab
   const filteredInvoices = invoices.filter(invoice => {
-    if (activeTab === 'all') {
+    if (props.activeTab === 'all') {
       return true;
-    } else if (activeTab === 'bill-of-supply') {
+    } else if (props.activeTab === 'bill-of-supply') {
       return invoice.type === 'bill-of-supply';
-    } else if (activeTab === 'e-invoices') {
+    } else if (props.activeTab === 'e-invoices') {
       return invoice.type === 'e-invoice';
-    } else if (activeTab === 'proforma-invoices') {
+    } else if (props.activeTab === 'proforma-invoices') {
       return invoice.type === 'proforma-invoice';
     }
     return false;
