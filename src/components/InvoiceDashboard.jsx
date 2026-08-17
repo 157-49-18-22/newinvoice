@@ -45,6 +45,7 @@ const InvoiceDashboard = (props) => {
     { id: 'all', label: 'All' },
     { id: 'e-invoices', label: 'E-Invoices' },
     { id: 'bill-of-supply', label: 'Bill Of Supply' },
+    { id: 'proforma-invoices', label: 'Proforma Invoices' },
   ];
 
   const handleTabClick = (tabId) => {
@@ -98,6 +99,16 @@ const InvoiceDashboard = (props) => {
     setOpenMenuId(null);
   };
 
+  const handleMarkAsDone = (invoiceId) => {
+    console.log(`Action: Mark as Done ${invoiceId}`);
+    if (window.confirm('Convert this Proforma Invoice to a regular Tax Invoice?')) {
+      if (props.onConvertToTaxInvoice) {
+        props.onConvertToTaxInvoice(invoiceId);
+      }
+    }
+    setOpenMenuId(null);
+  };
+
   const handleDelete = (invoiceId) => {
     console.log(`Action: Delete Invoice ${invoiceId}`);
     if (window.confirm('Are you sure you want to permanently delete this invoice? This cannot be undone.')) {
@@ -147,6 +158,8 @@ const InvoiceDashboard = (props) => {
       return invoice.type === 'bill-of-supply';
     } else if (activeTab === 'e-invoices') {
       return invoice.type === 'e-invoice';
+    } else if (activeTab === 'proforma-invoices') {
+      return invoice.type === 'proforma-invoice';
     }
     return false;
   }).sort((a, b) => {
@@ -166,7 +179,7 @@ const InvoiceDashboard = (props) => {
     if (invoice.selectedBuyer?.companyName) {
       return invoice.selectedBuyer.companyName;
     }
-    return invoice.type === 'bill-of-supply' ? 'Bill of Supply' : 'Cash Sale';
+    return invoice.type === 'bill-of-supply' ? 'Bill of Supply' : invoice.type === 'proforma-invoice' ? 'Proforma Invoice' : 'Cash Sale';
   };
 
   // Render component
@@ -236,10 +249,15 @@ const InvoiceDashboard = (props) => {
                   <div className="invoice-number">{invoice.number || invoice.id}</div>
                   <div className="invoice-date">{formatDate(invoice.date)}</div>
                 </div>
-                <div className="invoice-status">
+                <div className="invoice-status" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span className={`status ${(invoice.status || 'Unpaid').toLowerCase()}`}>
                     {invoice.status || 'Unpaid'}
                   </span>
+                  {invoice.type === 'proforma-invoice' && (
+                    <span className="status" style={{ backgroundColor: '#e2e8f0', color: '#475569', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                      PROFORMA
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -267,6 +285,9 @@ const InvoiceDashboard = (props) => {
                   {openMenuId === invoice.id && (
                     <div className="invoice-action-menu" ref={menuRef}>
                       <ul>
+                        {invoice.type === 'proforma-invoice' && (
+                          <li onClick={(e) => { e.stopPropagation(); handleMarkAsDone(invoice.id); }} className="action-done" style={{color: 'green', fontWeight: 'bold'}}>Mark as Done (Tax Invoice)</li>
+                        )}
                         <li onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }}>Edit Invoice</li>
                         <li onClick={(e) => { e.stopPropagation(); handleSendEmail(invoice.id); }}>Send Email</li>
                         <li onClick={(e) => { e.stopPropagation(); handleSendReminder(invoice.id); }}>Send Reminder</li>
