@@ -114,6 +114,25 @@ function App() {
     }
   };
 
+  const handleConvertToTaxInvoice = async (invoiceId) => {
+    try {
+      console.log(`🔥 [App] Converting proforma invoice ID: ${invoiceId} to tax invoice in Firebase...`);
+      const invoiceToUpdate = invoices.find(invoice => invoice.id === invoiceId);
+      if (invoiceToUpdate) {
+        await updateInvoice(invoiceId, { 
+          ...invoiceToUpdate, 
+          type: 'tax-invoice', 
+          invoiceType: 'tax-invoice',
+          status: 'unpaid' 
+        });
+        console.log('✅ [App] Invoice converted successfully in Firebase');
+      }
+    } catch (error) {
+      console.error('❌ [App] Error converting invoice in Firebase:', error);
+      alert('Error converting invoice. Please try again.');
+    }
+  };
+
   // Email and reminder handlers (mock functionality)
   const handleSendEmail = (invoiceId) => {
     console.log(`[App handleSendEmail] Would send email for invoice ID: ${invoiceId}`);
@@ -225,6 +244,7 @@ function App() {
           onDeleteInvoice={handleDeleteInvoice}
           onCancelInvoice={handleCancelInvoice}
           onDuplicateInvoice={handleDuplicateInvoice}
+          onConvertToTaxInvoice={handleConvertToTaxInvoice}
           onEditInvoice={handleEditInvoice}
           onUpdateStatus={handleUpdateStatus}
           onSendEmail={handleSendEmail}
