@@ -564,6 +564,15 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
             />
             Bill Of Supply
           </label>
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="invoice-type"
+              checked={invoiceType === 'proforma-invoice'}
+              onChange={() => setInvoiceType('proforma-invoice')}
+            />
+            Proforma Invoice
+          </label>
         </div>
 
         <div className="invoice-details">
