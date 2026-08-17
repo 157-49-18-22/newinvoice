@@ -83,7 +83,6 @@ const ProformaDocumentDynamic = ({ invoice }) => {
 
   const finalInvoiceAmount = Math.round(totalAmount);
 
-  const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const formatDate = (d) => {
     const date = new Date(d);
     return date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('/').join('-');
