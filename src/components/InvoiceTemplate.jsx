@@ -96,6 +96,153 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
   const roundOffValue = Math.round(grandTotal) - grandTotal;
   const finalInvoiceAmount = Math.round(grandTotal);
 
+  if (data?.invoiceType === 'proforma-invoice') {
+    return (
+      <div className="invoice-wrapper" ref={ref}>
+        <div className="invoice-container text-sm text-black py-8 px-12 flex flex-col bg-white font-sans" style={{ minHeight: '100%' }}>
+          
+          {/* Header with Logo */}
+          <div className="flex justify-end items-center mb-6">
+            {supplierData?.logo && (
+              <img alt="Logo" className="h-12 w-12 object-contain mr-2" src={supplierData.logo} />
+            )}
+            <h1 className="text-3xl font-bold text-blue-600 tracking-wider uppercase">{supplierData?.name || supplierData?.companyName || 'MAYDIV'}</h1>
+          </div>
+
+          <div className="text-center font-bold text-lg mb-6 underline">
+            PROFORMA INVOICE
+          </div>
+
+          <div className="text-sm font-semibold mb-6">
+            <p>Invoice No: {invoiceNumber || number}</p>
+            <p>Invoice Date: {formatDate(date)}</p>
+          </div>
+
+          <div className="flex justify-between mb-8 text-sm">
+            <div className="w-1/2 pr-4">
+              <h3 className="font-bold mb-2">Service Provider -</h3>
+              <p className="font-bold">{supplierData?.name || supplierData?.companyName}</p>
+              <p>{supplierData?.address}</p>
+              {supplierData?.city && <p>{supplierData.city}, {supplierData.state} - {supplierData.pincode}</p>}
+              <p className="mt-2"><span className="font-bold">GSTIN:</span> {supplierData?.gstin}</p>
+              <p><span className="font-bold">State:</span> {supplierData?.state} {supplierData?.stateCode && `(Code: ${supplierData.stateCode})`}</p>
+            </div>
+            <div className="w-1/2 pl-4 text-right">
+              <h3 className="font-bold mb-2">Bill To</h3>
+              <p className="font-bold">{buyerDataToUse?.name || buyerDataToUse?.companyName}</p>
+              <p>{buyerDataToUse?.address}</p>
+              {buyerDataToUse?.city && <p>{buyerDataToUse.city}, {buyerDataToUse.state} - {buyerDataToUse.pincode}</p>}
+              <p className="mt-2"><span className="font-bold">GSTIN:</span> {buyerDataToUse?.gstin}</p>
+              <p><span className="font-bold">State:</span> {buyerDataToUse?.state} {buyerDataToUse?.stateCode && `(Code: ${buyerDataToUse.stateCode})`}</p>
+            </div>
+          </div>
+
+          {/* Project Description */}
+          <div className="mb-6 text-sm">
+            <h3 className="font-bold mb-1">Project Description</h3>
+            <p>{products[0]?.name || products[0]?.description || 'Services Rendered'}</p>
+          </div>
+
+          {/* Amount Details Table */}
+          <div className="mb-8">
+            <h3 className="font-bold mb-2 text-sm">Amount Details</h3>
+            <table className="w-full border-collapse border border-black text-sm">
+              <thead>
+                <tr>
+                  <th className="border border-black p-2 text-left bg-gray-100">Description</th>
+                  <th className="border border-black p-2 text-center bg-gray-100">Rate</th>
+                  <th className="border border-black p-2 text-center bg-gray-100">Tax</th>
+                  <th className="border border-black p-2 text-center bg-gray-100">Total Amount Payable</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product, index) => {
+                  const quantity = safeCalculate(product?.quantity);
+                  const rawRate = safeCalculate(product?.salePrice);
+                  const gstRate = safeCalculate(product?.gst);
+                  const cessRate = safeCalculate(product?.cess || 0);
+
+                  let rate = rawRate;
+                  let amount = 0;
+                  let gstAmount = 0;
+
+                  if (product?.taxType === 'inclusive') {
+                    const totalTaxRate = gstRate + cessRate;
+                    rate = rawRate / (1 + (totalTaxRate / 100));
+                    amount = quantity * rate;
+                    gstAmount = amount * (gstRate / 100);
+                  } else {
+                    amount = quantity * rate;
+                    gstAmount = amount * (gstRate / 100);
+                  }
+
+                  const itemTotal = amount + gstAmount;
+
+                  return (
+                    <tr key={index}>
+                      <td className="border border-black p-2">
+                        <div className="font-semibold">{product?.name}</div>
+                        {product?.description && <div className="text-xs text-gray-600 italic mt-1">{product.description}</div>}
+                      </td>
+                      <td className="border border-black p-2 text-center">₹ {rate.toFixed(2)}</td>
+                      <td className="border border-black p-2 text-center">{gstRate}% (₹ {gstAmount.toFixed(2)})</td>
+                      <td className="border border-black p-2 text-center font-bold">₹ {itemTotal.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+                {/* Total Row */}
+                <tr>
+                  <td colSpan="3" className="border border-black p-2 text-right font-bold">Grand Total</td>
+                  <td className="border border-black p-2 text-center font-bold text-lg">₹ {finalInvoiceAmount.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Payment Details */}
+          {bankData && bankData.bankName && (
+            <div className="mb-6 text-sm">
+              <h3 className="font-bold mb-2">Payment Details</h3>
+              <p><span className="font-bold">Account Name:</span> {bankData.accountHolderName || supplierData?.name || supplierData?.companyName}</p>
+              <p><span className="font-bold">Account No.:</span> {bankData.accountNumber}</p>
+              <p><span className="font-bold">IFSC Code:</span> {bankData.ifscCode}</p>
+              <p><span className="font-bold">Bank Name:</span> {bankData.bankName}</p>
+              {bankData.branchName && <p><span className="font-bold">Branch:</span> {bankData.branchName}</p>}
+            </div>
+          )}
+
+          {/* Notes */}
+          <div className="mb-8 text-sm">
+            <h3 className="font-bold mb-2">Notes</h3>
+            <ul className="list-disc pl-5">
+              <li>This is a <span className="font-bold">Proforma Invoice</span> issued for advance/payment reference.</li>
+              <li>Final <span className="font-bold">Tax Invoice</span> will be issued after receipt of payment.</li>
+            </ul>
+          </div>
+
+          {/* Signatory */}
+          <div className="mt-auto text-sm">
+            <p className="font-bold mb-16">For {supplierData?.name || supplierData?.companyName || 'MAYDIV INFOTECH'}</p>
+            {data.includeSignature && data.signatureImage && (
+              <div className="mb-2" style={{ marginTop: '-60px' }}>
+                <img src={data.signatureImage} alt="Signature" style={{ maxHeight: '60px' }} />
+              </div>
+            )}
+            <p>Authorized Signatory</p>
+          </div>
+
+          {/* Footer Line */}
+          <div className="mt-8 pt-4 border-t-2 border-blue-500 text-xs flex justify-between items-center text-gray-600">
+            <p>📍 {[supplierData?.address, supplierData?.city, supplierData?.state, supplierData?.pincode].filter(Boolean).join(', ')}</p>
+            {supplierData?.email && <p>✉️ {supplierData.email}</p>}
+            {supplierData?.phone && <p>📞 {supplierData.phone}</p>}
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="invoice-wrapper" ref={ref}>
       <div className="invoice-container text-sm text-black py-8 px-12 flex flex-col">
@@ -136,7 +283,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           {/* InvoiceTitle */}
           <div className="bg-invoice-blue border-b border-black py-1.5 px-4 flex justify-between items-center" style={{ minHeight: '28px' }}>
             <div className="w-1/3"></div>
-            <div className="text-[15px] font-bold w-1/3 text-center uppercase" style={{ margin: 0 }}>{data.invoiceType === 'bill-of-supply' ? 'BILL OF SUPPLY' : 'TAX INVOICE'}</div>
+            <div className="text-[15px] font-bold w-1/3 text-center uppercase" style={{ margin: 0 }}>{data.invoiceType === 'bill-of-supply' ? 'BILL OF SUPPLY' : data.invoiceType === 'proforma-invoice' ? 'PROFORMA INVOICE' : 'TAX INVOICE'}</div>
             <div className="w-1/3 text-right italic text-xxs">Original For Recipient</div>
           </div>
 
