@@ -45,6 +45,177 @@ import ReactDOM from 'react-dom';
  *   leading-tight = line-height: 1.25
  *   -mt-4         = margin-top: -16px
  */
+const ProformaDocumentDynamic = ({ invoice }) => {
+  const supplier = invoice?.supplierData || {};
+  const buyer    = invoice?.buyerData || invoice?.selectedBuyer || {};
+  const products = invoice?.products || [];
+  const bankData = invoice?.bankData || {};
+
+  const safe = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+
+  let totalAmount = 0;
+  
+  // Calculate totals
+  const rows = products.map((p) => {
+    const qty = safe(p.quantity);
+    const rawRate = safe(p.salePrice);
+    const gstRate = safe(p.gst);
+    const cessRate = safe(p.cess || 0);
+
+    let rate = rawRate;
+    let amount = 0;
+    let gstAmount = 0;
+
+    if (p.taxType === 'inclusive') {
+      rate = rawRate / (1 + ((gstRate + cessRate) / 100));
+      amount = qty * rate;
+      gstAmount = amount * (gstRate / 100);
+    } else {
+      amount = qty * rate;
+      gstAmount = amount * (gstRate / 100);
+    }
+
+    const itemTotal = amount + gstAmount;
+    totalAmount += itemTotal;
+    
+    return { qty, rate, amount, gstAmount, gstRate, itemTotal, p };
+  });
+
+  const finalInvoiceAmount = Math.round(totalAmount);
+
+  const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatDate = (d) => {
+    const date = new Date(d);
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('/').join('-');
+  };
+
+  const FONT  = "'Arial', 'Helvetica Neue', Helvetica, sans-serif";
+  const BLACK = '#000000';
+  const BLUE700  = '#1d4ed8';
+
+  return (
+    <div style={{
+      background: '#ffffff',
+      padding: '40px 60px',
+      maxWidth: '794px',
+      minHeight: '1123px',
+      margin: '0 auto',
+      fontFamily: FONT,
+      color: BLACK,
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px' }}>
+        {supplier.logo && <img src={supplier.logo} alt="Logo" style={{ height: '48px', width: '48px', objectFit: 'contain', marginRight: '8px' }} />}
+        <h1 style={{ color: BLUE700, fontSize: '24px', fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: '1px' }}>
+          {supplier.name || supplier.companyName || 'MAYDIV'}
+        </h1>
+      </div>
+
+      <div style={{ textAlign: 'center', fontSize: '18px', fontWeight: 700, textDecoration: 'underline', marginBottom: '32px' }}>
+        PROFORMA INVOICE
+      </div>
+
+      <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '24px' }}>
+        <div style={{ marginBottom: '4px' }}>Invoice No: {invoice.invoiceNumber || invoice.number}</div>
+        <div>Invoice Date: {formatDate(invoice.date)}</div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', fontSize: '14px' }}>
+        <div style={{ width: '45%' }}>
+          <div style={{ fontWeight: 700, marginBottom: '8px' }}>Service Provider -</div>
+          <div style={{ fontWeight: 700 }}>{supplier.name || supplier.companyName}</div>
+          <div>{supplier.address}</div>
+          <div>{[supplier.city, supplier.state].filter(Boolean).join(', ')}{supplier.pincode ? ` - ${supplier.pincode}` : ''}</div>
+          <div style={{ marginTop: '8px' }}><span style={{ fontWeight: 700 }}>GSTIN:</span> {supplier.gstin}</div>
+          <div><span style={{ fontWeight: 700 }}>State:</span> {supplier.state} {supplier.stateCode ? `(Code: ${supplier.stateCode})` : ''}</div>
+        </div>
+        <div style={{ width: '45%', textAlign: 'right' }}>
+          <div style={{ fontWeight: 700, marginBottom: '8px' }}>Bill To</div>
+          <div style={{ fontWeight: 700 }}>{buyer.name || buyer.companyName}</div>
+          <div>{buyer.address}</div>
+          <div>{[buyer.city, buyer.state].filter(Boolean).join(', ')}{buyer.pincode ? ` - ${buyer.pincode}` : ''}</div>
+          <div style={{ marginTop: '8px' }}><span style={{ fontWeight: 700 }}>GSTIN:</span> {buyer.gstin}</div>
+          <div><span style={{ fontWeight: 700 }}>State:</span> {buyer.state} {buyer.stateCode ? `(Code: ${buyer.stateCode})` : ''}</div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '24px', fontSize: '14px' }}>
+        <div style={{ fontWeight: 700, marginBottom: '4px' }}>Project Description</div>
+        <div>{products[0]?.name || products[0]?.description || 'Services Rendered'}</div>
+      </div>
+
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{ fontWeight: 700, marginBottom: '8px', fontSize: '14px' }}>Amount Details</div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+          <thead>
+            <tr>
+              <th style={{ border: '1px solid #000', padding: '8px', textAlign: 'left', backgroundColor: '#f3f4f6' }}>Description</th>
+              <th style={{ border: '1px solid #000', padding: '8px', textAlign: 'center', backgroundColor: '#f3f4f6' }}>Rate</th>
+              <th style={{ border: '1px solid #000', padding: '8px', textAlign: 'center', backgroundColor: '#f3f4f6' }}>Tax</th>
+              <th style={{ border: '1px solid #000', padding: '8px', textAlign: 'center', backgroundColor: '#f3f4f6' }}>Total Amount Payable</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i}>
+                <td style={{ border: '1px solid #000', padding: '8px' }}>
+                  <div style={{ fontWeight: 600 }}>{row.p.name}</div>
+                  {row.p.description && <div style={{ fontSize: '12px', color: '#4b5563', fontStyle: 'italic', marginTop: '4px' }}>{row.p.description}</div>}
+                </td>
+                <td style={{ border: '1px solid #000', padding: '8px', textAlign: 'center' }}>₹ {row.rate.toFixed(2)}</td>
+                <td style={{ border: '1px solid #000', padding: '8px', textAlign: 'center' }}>{row.gstRate}% (₹ {row.gstAmount.toFixed(2)})</td>
+                <td style={{ border: '1px solid #000', padding: '8px', textAlign: 'center', fontWeight: 700 }}>₹ {row.itemTotal.toFixed(2)}</td>
+              </tr>
+            ))}
+            <tr>
+              <td colSpan="3" style={{ border: '1px solid #000', padding: '8px', textAlign: 'right', fontWeight: 700 }}>Grand Total</td>
+              <td style={{ border: '1px solid #000', padding: '8px', textAlign: 'center', fontWeight: 700, fontSize: '16px' }}>₹ {finalInvoiceAmount.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {bankData?.bankName && (
+        <div style={{ marginBottom: '24px', fontSize: '14px' }}>
+          <div style={{ fontWeight: 700, marginBottom: '8px' }}>Payment Details</div>
+          <div><span style={{ fontWeight: 700 }}>Account Name:</span> {bankData.accountHolderName || supplier.name || supplier.companyName}</div>
+          <div><span style={{ fontWeight: 700 }}>Account No.:</span> {bankData.accountNumber}</div>
+          <div><span style={{ fontWeight: 700 }}>IFSC Code:</span> {bankData.ifscCode}</div>
+          <div><span style={{ fontWeight: 700 }}>Bank Name:</span> {bankData.bankName}</div>
+          {bankData.branchName && <div><span style={{ fontWeight: 700 }}>Branch:</span> {bankData.branchName}</div>}
+        </div>
+      )}
+
+      <div style={{ marginBottom: '32px', fontSize: '14px' }}>
+        <div style={{ fontWeight: 700, marginBottom: '8px' }}>Notes</div>
+        <ul style={{ margin: 0, paddingLeft: '24px' }}>
+          <li>This is a <span style={{ fontWeight: 700 }}>Proforma Invoice</span> issued for advance/payment reference.</li>
+          <li>Final <span style={{ fontWeight: 700 }}>Tax Invoice</span> will be issued after receipt of payment.</li>
+        </ul>
+      </div>
+
+      <div style={{ marginTop: 'auto', fontSize: '14px' }}>
+        <div style={{ fontWeight: 700, marginBottom: '64px' }}>For {supplier.name || supplier.companyName || 'MAYDIV INFOTECH'}</div>
+        {invoice.includeSignature && invoice.signatureImage && (
+          <div style={{ marginTop: '-60px', marginBottom: '8px' }}>
+            <img src={invoice.signatureImage} alt="Signature" style={{ maxHeight: '60px' }} />
+          </div>
+        )}
+        <div>Authorized Signatory</div>
+      </div>
+
+      <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '2px solid #3b82f6', fontSize: '12px', display: 'flex', justifyContent: 'space-between', color: '#4b5563' }}>
+        <div>📍 {[supplier.address, supplier.city, supplier.state, supplier.pincode].filter(Boolean).join(', ')}</div>
+        {supplier.email && <div>✉️ {supplier.email}</div>}
+        {supplier.phone && <div>📞 {supplier.phone}</div>}
+      </div>
+    </div>
+  );
+};
+
 const InvoiceDocumentDynamic = ({ invoice }) => {
   const supplier = invoice?.supplierData || {};
   const buyer    = invoice?.buyerData || invoice?.selectedBuyer || {};
@@ -491,7 +662,9 @@ export const generatePDF = async (invoice) => {
 
     await new Promise((resolve) => {
       ReactDOM.render(
-        <InvoiceDocumentDynamic invoice={invoice} />,
+        invoice.type === 'proforma-invoice' || invoice.invoiceType === 'proforma-invoice' 
+          ? <ProformaDocumentDynamic invoice={invoice} />
+          : <InvoiceDocumentDynamic invoice={invoice} />,
         tempContainer,
         () => setTimeout(resolve, 1000),
       );
