@@ -234,9 +234,9 @@ const InvoiceDashboard = (props) => {
         <div className="invoice-list">
           {filteredInvoices.map((invoice) => (
             <div 
-              key={invoice.id} 
+              key={invoice.id || Math.random()} 
               className="invoice-card"
-              style={{ zIndex: openMenuId === invoice.id ? 50 : 1 }}
+              style={{ zIndex: (openMenuId !== null && openMenuId === invoice.id) ? 50 : 1 }}
             >
               <div className="invoice-main" style={{ cursor: 'default' }}>
                 <div className="invoice-title">
@@ -279,7 +279,7 @@ const InvoiceDashboard = (props) => {
                   >
                     <FiMoreVertical />
                   </button>
-                  {openMenuId === invoice.id && (
+                  {openMenuId !== null && openMenuId === invoice.id && (
                     <div className="invoice-action-menu" ref={menuRef}>
                       <ul>
                         {invoice.type === 'proforma-invoice' && (
