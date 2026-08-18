@@ -104,13 +104,12 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           {/* Header with Logo */}
           <div className="flex justify-end items-center mb-6">
             {supplierData?.logo && (
-              <img alt="Logo" className="h-12 w-12 object-contain mr-2" src={supplierData.logo} />
+              <img alt="Logo" className="object-contain" style={{ height: '72px', width: 'auto', maxWidth: '200px' }} src={supplierData.logo} />
             )}
-            <h1 className="text-3xl font-bold text-blue-600 tracking-wider uppercase">{supplierData?.name || supplierData?.companyName || 'MAYDIV'}</h1>
           </div>
 
           <div className="text-center font-bold text-lg mb-6 underline">
-            PROFORMA INVOICE
+            PROFORMA
           </div>
 
           <div className="text-sm font-semibold mb-6">
@@ -151,7 +150,14 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 <tr>
                   <th className="border border-black p-2 text-left bg-gray-100">Description</th>
                   <th className="border border-black p-2 text-center bg-gray-100">Rate</th>
-                  <th className="border border-black p-2 text-center bg-gray-100">Tax</th>
+                  {showIGST && <>
+                    <th className="border border-black p-2 text-center bg-gray-100">IGST Rate</th>
+                    <th className="border border-black p-2 text-center bg-gray-100">IGST Amount</th>
+                  </>}
+                  {showSGST && <>
+                    <th className="border border-black p-2 text-center bg-gray-100">SGST Rate</th>
+                    <th className="border border-black p-2 text-center bg-gray-100">SGST Amount</th>
+                  </>}
                   <th className="border border-black p-2 text-center bg-gray-100">Total Amount Payable</th>
                 </tr>
               </thead>
@@ -185,14 +191,21 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                         {product?.description && <div className="text-xs text-gray-600 italic mt-1">{product.description}</div>}
                       </td>
                       <td className="border border-black p-2 text-center">₹ {rate.toFixed(2)}</td>
-                      <td className="border border-black p-2 text-center">{gstRate}% (₹ {gstAmount.toFixed(2)})</td>
+                      {showIGST && <>
+                        <td className="border border-black p-2 text-center">{gstRate.toFixed(2)}%</td>
+                        <td className="border border-black p-2 text-center">₹ {gstAmount.toFixed(2)}</td>
+                      </>}
+                      {showSGST && <>
+                        <td className="border border-black p-2 text-center">{(gstRate / 2).toFixed(2)}%</td>
+                        <td className="border border-black p-2 text-center">₹ {(gstAmount / 2).toFixed(2)}</td>
+                      </>}
                       <td className="border border-black p-2 text-center font-bold">₹ {itemTotal.toFixed(2)}</td>
                     </tr>
                   );
                 })}
                 {/* Total Row */}
                 <tr>
-                  <td colSpan="3" className="border border-black p-2 text-right font-bold">Grand Total</td>
+                  <td colSpan={2 + (showIGST ? 2 : 0) + (showSGST ? 2 : 0)} className="border border-black p-2 text-right font-bold">Grand Total</td>
                   <td className="border border-black p-2 text-center font-bold text-lg">₹ {finalInvoiceAmount.toFixed(2)}</td>
                 </tr>
               </tbody>
