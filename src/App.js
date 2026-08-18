@@ -178,6 +178,7 @@ function App() {
         
         // Prepare the invoice data with proper data types and null checks
         const newInvoiceData = {
+          ...invoiceData, // Spread to include gstType, discountPercent, consigneeType, etc.
           type: String(invoiceData.invoiceType || 'tax-invoice'),
           amount: Number(invoiceData.amount) || 0,
           number: String(invoiceData.invoiceNo || (invoices.length + 1)),
@@ -215,7 +216,8 @@ function App() {
             : {},
             
           includeSignature: Boolean(invoiceData.includeSignature),
-          signatureImage: invoiceData.signatureImage || null
+          signatureImage: invoiceData.signatureImage || null,
+          gstType: invoiceData.gstType || 'auto'
         };
         
         await addInvoice(newInvoiceData);
