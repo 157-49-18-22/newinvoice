@@ -462,8 +462,6 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
                 <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>IGST<br/>Amount</th>
               </>}
               {showSGST && <>
-                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>CGST<br/>Rate</th>
-                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>CGST<br/>Amount</th>
                 <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>SGST<br/>Rate</th>
                 <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>SGST<br/>Amount</th>
               </>}
@@ -489,8 +487,6 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
                 </>}
                 {showSGST && <>
                   <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{(gstRate/2).toFixed(2)}%</td>
-                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(cgst)}</td>
-                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{(gstRate/2).toFixed(2)}%</td>
                   <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(sgst)}</td>
                 </>}
                 <td style={{ border: B, padding: '4px', textAlign: 'right' }}>₹ {fmt(amount + gstAmount)}</td>
@@ -499,7 +495,7 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
 
             {/* Empty spacer row — h-8 = 32px */}
             <tr>
-              {Array.from({ length: 7 + (showIGST ? 2 : 0) + (showSGST ? 4 : 0) }).map((_, i) => (
+              {Array.from({ length: 7 + (showIGST ? 2 : 0) + (showSGST ? 2 : 0) }).map((_, i) => (
                 <td key={i} style={{ border: B, padding: '4px', height: '32px' }}></td>
               ))}
             </tr>
@@ -518,8 +514,6 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
                 <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalIGST)}</td>
               </>}
               {showSGST && <>
-                <td style={{ border: B, padding: '4px' }}></td>
-                <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalCGST)}</td>
                 <td style={{ border: B, padding: '4px' }}></td>
                 <td style={{ border: B, padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalSGST)}</td>
               </>}
@@ -584,10 +578,6 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
                 </div>
               )}
               {showSGST && <>
-                <div style={{ display: 'flex', borderBottom: B }}>
-                  <span style={{ flex: 1, padding: '4px' }}>Add : CGST</span>
-                  <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalCGST)}</span>
-                </div>
                 <div style={{ display: 'flex', borderBottom: B }}>
                   <span style={{ flex: 1, padding: '4px' }}>Add : SGST</span>
                   <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(totalSGST)}</span>
