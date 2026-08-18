@@ -285,7 +285,7 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
         const totalTaxRate = gstRate + cessRate;
         const inclusiveAmountPerItem = salePrice;
         const basePricePerItem = inclusiveAmountPerItem / (1 + (totalTaxRate / 100));
-        
+
         itemTotal = quantity * basePricePerItem;
         gstAmt = quantity * (basePricePerItem * (gstRate / 100));
         cessAmt = quantity * (basePricePerItem * (cessRate / 100));
@@ -1110,4 +1110,6 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   );
 };
 
-export default CreateInvoice; 
+export default CreateInvoice;
+
+
