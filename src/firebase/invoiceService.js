@@ -155,8 +155,8 @@ export const getAllInvoices = async () => {
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
-        id: doc.id,
-        ...convertTimestamps(data)
+        ...convertTimestamps(data),
+        id: doc.id
       };
     });
   } catch (error) {
@@ -171,8 +171,8 @@ export const subscribeToInvoices = (callback) => {
   
   return onSnapshot(q, (querySnapshot) => {
     const invoices = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...convertTimestamps(doc.data())
+      ...convertTimestamps(doc.data()),
+      id: doc.id
     }));
     callback(invoices);
   }, (error) => {
