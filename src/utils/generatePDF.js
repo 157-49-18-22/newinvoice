@@ -63,7 +63,6 @@ const ProformaDocumentDynamic = ({ invoice }) => {
   else if (gstType === 'both') { showIGST = true; showSGST = true; }
 
   let totalAmount = 0;
-  let totalGST = 0;
 
   const rows = products.map((p) => {
     const qty = safe(p.quantity);
@@ -86,7 +85,6 @@ const ProformaDocumentDynamic = ({ invoice }) => {
 
     const itemTotal = amount + gstAmount;
     totalAmount += itemTotal;
-    totalGST += gstAmount;
 
     return { qty, rate, amount, gstAmount, gstRate, cgst: gstAmount / 2, sgst: gstAmount / 2, itemTotal, p };
   });
@@ -100,8 +98,6 @@ const ProformaDocumentDynamic = ({ invoice }) => {
 
   const FONT  = "'Times New Roman', Times, serif";
   const BLACK = '#000000';
-  const BLUE700  = '#1d4ed8';
-
   return (
     <div style={{
       background: '#ffffff',
