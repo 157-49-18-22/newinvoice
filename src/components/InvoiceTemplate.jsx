@@ -574,3 +574,5 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
 });
 
 export default InvoiceTemplate;
+
+
