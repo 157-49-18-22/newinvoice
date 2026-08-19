@@ -317,7 +317,7 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
 
   const safe = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 
-  let subTotal = 0, totalGST = 0, totalIGST = 0, totalCGST = 0, totalSGST = 0, totalQty = 0;
+  let subTotal = 0, totalGST = 0, totalIGST = 0, totalSGST = 0, totalQty = 0;
 
   const rows = products.map((p) => {
     const qty     = safe(p.quantity);
@@ -337,7 +337,7 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
     totalGST  += gstAmount;
     totalQty  += qty;
     if (showIGST) totalIGST += gstAmount;
-    if (showSGST) { totalCGST += gstAmount / 2; totalSGST += gstAmount / 2; }
+    if (showSGST) { totalSGST += gstAmount / 2; }
     return { qty, rate, amount, gstAmount, gstRate, cgst: gstAmount / 2, sgst: gstAmount / 2, p };
   });
 
