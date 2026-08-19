@@ -109,12 +109,12 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
           </div>
 
           <div className="text-center font-bold text-lg mb-6 underline">
-            PROFORMA
+            PROFORMA INVOICE
           </div>
 
           <div className="text-sm font-semibold mb-6">
-            <p>Invoice No: {invoiceNumber || number}</p>
-            <p>Invoice Date: {formatDate(date)}</p>
+            <p>Proforma No: {invoiceNumber || number}</p>
+            <p>Proforma Date: {formatDate(date)}</p>
           </div>
 
           <div className="flex justify-between mb-8 text-sm">
