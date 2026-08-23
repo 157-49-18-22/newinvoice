@@ -118,7 +118,7 @@ const ProformaDocumentDynamic = ({ invoice }) => {
       overflow: 'hidden',
     }}>
       {/* ── LOGO: top-right, 278×191px, right margin 14px, top 3px ── */}
-      {supplier.logo && (
+      {(supplier.proformaLogo || supplier.logo) && (
         <div style={{
           position: 'absolute',
           top: '14px',
@@ -127,7 +127,7 @@ const ProformaDocumentDynamic = ({ invoice }) => {
           justifyContent: 'flex-end',
         }}>
           <img
-            src={supplier.logo}
+            src={supplier.proformaLogo || supplier.logo}
             alt="Logo"
             style={{
               height: '64px',
