@@ -27,10 +27,13 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
     gstin: '',
     pan: '',
     contactPerson: '',
+    contactPerson: '',
     notes: '',
-    logo: null
+    logo: null,
+    proformaLogo: null
   });
   const [logoPreview, setLogoPreview] = useState(initialData?.logo || null);
+  const [proformaLogoPreview, setProformaLogoPreview] = useState(initialData?.proformaLogo || null);
 
   // Save suppliers to localStorage whenever they change
   useEffect(() => {
@@ -50,10 +53,13 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
       gstin: '',
       pan: '',
       contactPerson: '',
+      contactPerson: '',
       notes: '',
-      logo: null
+      logo: null,
+      proformaLogo: null
     });
     setLogoPreview(null);
+    setProformaLogoPreview(null);
     setSelectedIndex(null);
     setEditing(true);
   };
@@ -61,6 +67,7 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
   const handleEdit = (idx) => {
     setFormData(suppliers[idx]);
     setLogoPreview(suppliers[idx].logo || null);
+    setProformaLogoPreview(suppliers[idx].proformaLogo || null);
     setSelectedIndex(idx);
     setEditing(true);
   };
@@ -96,18 +103,59 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
     setShowView(false);
   };
 
+  // Helper to compress image
+  const compressImage = (file, callback) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400; // Resize to max width 400px
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to base64 with some compression (0.7 quality)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        callback(compressedBase64);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Add logo upload handler
   const fileInputRef = useRef(null);
   const handleLogoClick = () => fileInputRef.current.click();
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result);
-        setFormData(prev => ({ ...prev, logo: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      compressImage(file, (compressedBase64) => {
+        setLogoPreview(compressedBase64);
+        setFormData(prev => ({ ...prev, logo: compressedBase64 }));
+      });
+    }
+  };
+
+  const proformaFileInputRef = useRef(null);
+  const handleProformaLogoClick = () => proformaFileInputRef.current.click();
+  const handleProformaLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      compressImage(file, (compressedBase64) => {
+        setProformaLogoPreview(compressedBase64);
+        setFormData(prev => ({ ...prev, proformaLogo: compressedBase64 }));
+      });
     }
   };
 
@@ -188,40 +236,80 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
         <button className="save-button" onClick={handleSave}>Save</button>
       </header>
       <form className="details-form" onSubmit={handleSave}>
-        <div className="logo-section">
-          <div 
-            className="logo-upload" 
-            onClick={handleLogoClick}
-            style={{
-              backgroundImage: logoPreview ? `url(${logoPreview})` : 'none'
-            }}
-          >
-            {!logoPreview && (
-              <div className="logo-placeholder">
-                <span>+</span>
-                <span>Add Logo</span>
-              </div>
-            )}
-          </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleLogoChange}
-            accept="image/*"
-            style={{ display: 'none' }}
-          />
-          {logoPreview && (
-            <button
-              type="button"
-              className="remove-logo"
-              onClick={() => {
-                setLogoPreview(null);
-                setFormData(prev => ({ ...prev, logo: null }));
+        <div className="logo-section" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Tax Invoice Logo</label>
+            <div 
+              className="logo-upload" 
+              onClick={handleLogoClick}
+              style={{
+                backgroundImage: logoPreview ? `url(${logoPreview})` : 'none'
               }}
             >
-              Remove Logo
-            </button>
-          )}
+              {!logoPreview && (
+                <div className="logo-placeholder">
+                  <span>+</span>
+                  <span>Add Logo</span>
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleLogoChange}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+            {logoPreview && (
+              <button
+                type="button"
+                className="remove-logo"
+                onClick={() => {
+                  setLogoPreview(null);
+                  setFormData(prev => ({ ...prev, logo: null }));
+                }}
+              >
+                Remove Logo
+              </button>
+            )}
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Proforma Logo</label>
+            <div 
+              className="logo-upload" 
+              onClick={handleProformaLogoClick}
+              style={{
+                backgroundImage: proformaLogoPreview ? `url(${proformaLogoPreview})` : 'none'
+              }}
+            >
+              {!proformaLogoPreview && (
+                <div className="logo-placeholder">
+                  <span>+</span>
+                  <span>Add Logo</span>
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              ref={proformaFileInputRef}
+              onChange={handleProformaLogoChange}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+            {proformaLogoPreview && (
+              <button
+                type="button"
+                className="remove-logo"
+                onClick={() => {
+                  setProformaLogoPreview(null);
+                  setFormData(prev => ({ ...prev, proformaLogo: null }));
+                }}
+              >
+                Remove Logo
+              </button>
+            )}
+          </div>
         </div>
         <div className="form-group">
           <label htmlFor="name">Name<span className="required">*</span></label>
