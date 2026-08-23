@@ -27,7 +27,6 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
     gstin: '',
     pan: '',
     contactPerson: '',
-    contactPerson: '',
     notes: '',
     logo: null,
     proformaLogo: null
@@ -52,7 +51,6 @@ const SupplierDetails = ({ onClose, onSave = () => {}, initialData, viewOnly = f
       address: '',
       gstin: '',
       pan: '',
-      contactPerson: '',
       contactPerson: '',
       notes: '',
       logo: null,
