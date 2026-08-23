@@ -191,7 +191,7 @@ function App() {
       setEditingInvoice(null); // Clear editing state
     } catch (error) {
       console.error('Error saving invoice:', error);
-      alert('Error saving invoice. Please try again.');
+      alert('Error saving invoice: ' + error.message);
     }
   };
 
