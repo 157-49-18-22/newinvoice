@@ -119,19 +119,24 @@ const ProformaDocumentDynamic = ({ invoice }) => {
     }}>
       {/* ── LOGO: top-right, 278×191px, right margin 14px, top 3px ── */}
       {supplier.logo && (
-        <img
-          src={supplier.logo}
-          alt="Logo"
-          style={{
-            position: 'absolute',
-            top: '3px',
-            right: '14px',
-            width: '160px',
-            height: '110px',
-            objectFit: 'contain',
-            background: 'white',
-          }}
-        />
+        <div style={{
+          position: 'absolute',
+          top: '14px',
+          right: '14px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}>
+          <img
+            src={supplier.logo}
+            alt="Logo"
+            style={{
+              height: '64px',
+              width: 'auto',
+              maxWidth: '200px',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
       )}
 
       {/* ── MAIN CONTENT: left 37px, right 41px, top 37px ── */}
@@ -260,7 +265,7 @@ const ProformaDocumentDynamic = ({ invoice }) => {
       {/* Address centered below bar */}
       <div style={{
         position: 'absolute', left: '42px', right: '42px', bottom: '62px',
-        textAlign: 'center', fontSize: '13px', fontFamily: FONT, fontWeight: 600, color: BLACK,
+        textAlign: 'center', fontSize: '13px', fontFamily: FONT, fontWeight: 'normal', color: BLACK,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
       }}>
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE} style={{ flexShrink: 0 }}>
@@ -273,7 +278,7 @@ const ProformaDocumentDynamic = ({ invoice }) => {
       <div style={{
         position: 'absolute', left: '42px', right: '42px', bottom: '22px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontSize: '13px', fontFamily: FONT, fontWeight: 600, color: BLACK,
+        fontSize: '13px', fontFamily: FONT, fontWeight: 'normal', color: BLACK,
       }}>
         {supplier.email && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -373,7 +378,7 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
   };
 
   // ─── Exact Tailwind → inline style map ────────────────────────────────────
-  const FONT  = "'Times New Roman', Times, serif";
+  const FONT  = "'Arial', 'Helvetica Neue', Helvetica, sans-serif";
   const BLACK = '#000000';
   const BLUE100  = '#dbeafe';  // bg-blue-100
   const BLUE900  = '#1e3a8a';  // bg-blue-900
@@ -768,7 +773,9 @@ export const generatePDF = async (invoice) => {
 
     // Canvas matches A4 ratio exactly → fills page perfectly, no scaling artifacts
     pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 210, 297);
-    pdf.save(`Invoice-${invoice.invoiceNumber || invoice.number || '1'}.pdf`);
+    const isProforma = invoice.type === 'proforma-invoice' || invoice.invoiceType === 'proforma-invoice';
+    const fileNamePrefix = isProforma ? 'Proforma' : 'Invoice';
+    pdf.save(`${fileNamePrefix}-${invoice.invoiceNumber || invoice.number || '1'}.pdf`);
 
     console.log('PDF saved — single portrait A4 page');
 
