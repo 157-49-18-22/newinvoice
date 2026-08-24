@@ -99,16 +99,23 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
   if (data?.invoiceType === 'proforma-invoice') {
     return (
       <div className="invoice-wrapper" ref={ref}>
-        <div className="invoice-container text-sm text-black py-8 px-12 flex flex-col bg-white font-sans" style={{ minHeight: '100%' }}>
+        <div className="invoice-container text-sm text-black py-8 px-12 flex flex-col bg-white font-sans relative" style={{ minHeight: '100%' }}>
 
           {/* Header with Logo */}
-          <div className="flex justify-end items-center mb-6">
-            {(supplierData?.proformaLogo || supplierData?.logo) && (
-              <img alt="Logo" className="object-contain" style={{ height: '72px', width: 'auto', maxWidth: '200px' }} src={supplierData.proformaLogo || supplierData.logo} />
-            )}
-          </div>
+          {(supplierData?.proformaLogo || supplierData?.logo) && (
+            <div style={{
+              position: 'absolute',
+              top: '-90px',
+              right: '-15px',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'flex-start',
+            }}>
+              <img alt="Logo" style={{ width: '300px', height: 'auto', objectFit: 'contain', objectPosition: 'right top' }} src={supplierData.proformaLogo || supplierData.logo} />
+            </div>
+          )}
 
-          <div className="text-center font-bold text-lg mb-6 underline">
+          <div className="text-center font-bold text-lg mb-6 underline" style={{ marginTop: '120px' }}>
             PROFORMA INVOICE
           </div>
 
