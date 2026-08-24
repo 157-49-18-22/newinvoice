@@ -47,7 +47,7 @@ import ReactDOM from 'react-dom';
  */
 const ProformaDocumentDynamic = ({ invoice }) => {
   const supplier = invoice?.supplierData || {};
-  const buyer    = invoice?.buyerData || invoice?.selectedBuyer || {};
+  const buyer = invoice?.buyerData || invoice?.selectedBuyer || {};
   const products = invoice?.products || [];
   const bankData = invoice?.bankData || {};
 
@@ -57,7 +57,7 @@ const ProformaDocumentDynamic = ({ invoice }) => {
   const isInterState = supplier?.state !== buyer?.state;
   const gstType = invoice?.gstType || 'auto';
   let showIGST = false, showSGST = false;
-  if      (gstType === 'auto') { showIGST = isInterState; showSGST = !isInterState; }
+  if (gstType === 'auto') { showIGST = isInterState; showSGST = !isInterState; }
   else if (gstType === 'igst') { showIGST = true; }
   else if (gstType === 'sgst') { showSGST = true; }
   else if (gstType === 'both') { showIGST = true; showSGST = true; }
@@ -96,9 +96,9 @@ const ProformaDocumentDynamic = ({ invoice }) => {
     return date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('/').join('-');
   };
 
-  const FONT  = "'Times New Roman', Times, serif";
+  const FONT = "'Times New Roman', Times, serif";
   const BLACK = '#000000';
-  const BLUE  = '#1d4ed8';
+  const BLUE = '#1d4ed8';
 
   // pt→px scale: 794/596 ≈ 1.332
   // Page: 794×1123px | Left pad: 37px | Right pad: 41px | Content width: 716px
@@ -117,23 +117,24 @@ const ProformaDocumentDynamic = ({ invoice }) => {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* ── LOGO: top-right, 278×191px, right margin 14px, top 3px ── */}
+      {/* ── LOGO: top-right ── */}
       {(supplier.proformaLogo || supplier.logo) && (
         <div style={{
           position: 'absolute',
-          top: '14px',
-          right: '14px',
+          top: '-104px',
+          right: '-1px',
           display: 'flex',
           justifyContent: 'flex-end',
+          alignItems: 'flex-start',
         }}>
           <img
             src={supplier.proformaLogo || supplier.logo}
             alt="Logo"
             style={{
-              height: '64px',
-              width: 'auto',
-              maxWidth: '200px',
+              width: '300px',
+              height: 'auto',
               objectFit: 'contain',
+              objectPosition: 'right top'
             }}
           />
         </div>
@@ -269,7 +270,7 @@ const ProformaDocumentDynamic = ({ invoice }) => {
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
       }}>
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE} style={{ flexShrink: 0 }}>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
         </svg>
         {[supplier.address, supplier.city, supplier.state && supplier.pincode ? `${supplier.state}-${supplier.pincode}` : supplier.state].filter(Boolean).join(', ')}
       </div>
@@ -282,19 +283,19 @@ const ProformaDocumentDynamic = ({ invoice }) => {
       }}>
         {supplier.email && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" /></svg>
             <span style={{ color: BLUE, textDecoration: 'underline' }}>{supplier.email}</span>
           </div>
         )}
         {supplier.phone && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE}><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE}><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" /></svg>
             {supplier.phone}
           </div>
         )}
         {supplier.website && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill={BLUE}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" /></svg>
             {supplier.website}
           </div>
         )}
@@ -306,7 +307,7 @@ const ProformaDocumentDynamic = ({ invoice }) => {
 
 const InvoiceDocumentDynamic = ({ invoice }) => {
   const supplier = invoice?.supplierData || {};
-  const buyer    = invoice?.buyerData || invoice?.selectedBuyer || {};
+  const buyer = invoice?.buyerData || invoice?.selectedBuyer || {};
   const products = invoice?.products || [];
   const bankData = invoice?.bankData || {};
   const discountPercent = parseFloat(invoice?.discountPercent || 0);
@@ -315,7 +316,7 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
   const isInterState = supplier?.state !== buyer?.state;
   const gstType = invoice?.gstType || 'auto';
   let showIGST = false, showSGST = false;
-  if      (gstType === 'auto') { showIGST = isInterState; showSGST = !isInterState; }
+  if (gstType === 'auto') { showIGST = isInterState; showSGST = !isInterState; }
   else if (gstType === 'igst') { showIGST = true; }
   else if (gstType === 'sgst') { showSGST = true; }
   else if (gstType === 'both') { showIGST = true; showSGST = true; }
@@ -325,32 +326,32 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
   let subTotal = 0, totalGST = 0, totalIGST = 0, totalSGST = 0, totalQty = 0;
 
   const rows = products.map((p) => {
-    const qty     = safe(p.quantity);
+    const qty = safe(p.quantity);
     const rawRate = safe(p.salePrice);
     const gstRate = safe(p.gst);
     const cessRate = safe(p.cess || 0);
     let rate = rawRate, amount = 0, gstAmount = 0;
     if (p.taxType === 'inclusive') {
-      rate      = rawRate / (1 + ((gstRate + cessRate) / 100));
-      amount    = qty * rate;
+      rate = rawRate / (1 + ((gstRate + cessRate) / 100));
+      amount = qty * rate;
       gstAmount = amount * (gstRate / 100);
     } else {
-      amount    = qty * rate;
+      amount = qty * rate;
       gstAmount = amount * (gstRate / 100);
     }
-    subTotal  += amount;
-    totalGST  += gstAmount;
-    totalQty  += qty;
+    subTotal += amount;
+    totalGST += gstAmount;
+    totalQty += qty;
     if (showIGST) totalIGST += gstAmount;
     if (showSGST) { totalSGST += gstAmount / 2; }
     return { qty, rate, amount, gstAmount, gstRate, cgst: gstAmount / 2, sgst: gstAmount / 2, p };
   });
 
-  const totalWithTax    = subTotal + totalGST;
-  const discountAmount  = totalWithTax * (discountPercent / 100);
-  const grandTotal      = totalWithTax - discountAmount;
-  const roundOff        = Math.round(grandTotal) - grandTotal;
-  const finalAmount     = Math.round(grandTotal);
+  const totalWithTax = subTotal + totalGST;
+  const discountAmount = totalWithTax * (discountPercent / 100);
+  const grandTotal = totalWithTax - discountAmount;
+  const roundOff = Math.round(grandTotal) - grandTotal;
+  const finalAmount = Math.round(grandTotal);
 
   // en-IN locale formatting (e.g. 1,23,456.00)
   const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -361,30 +362,30 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
   };
 
   // Number to words (handles crores)
-  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
-    'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
-  const tensW = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tensW = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
   const numToWords = (n) => {
     if (n === 0) return 'Zero';
     const conv = (num) => {
-      if (num < 20)       return ones[num];
-      if (num < 100)      return tensW[Math.floor(num/10)] + (num%10 ? ' '+ones[num%10] : '');
-      if (num < 1000)     return ones[Math.floor(num/100)] + ' Hundred' + (num%100 ? ' '+conv(num%100) : '');
-      if (num < 100000)   return conv(Math.floor(num/1000)) + ' Thousand' + (num%1000 ? ' '+conv(num%1000) : '');
-      if (num < 10000000) return conv(Math.floor(num/100000)) + ' Lakh' + (num%100000 ? ' '+conv(num%100000) : '');
-      return conv(Math.floor(num/10000000)) + ' Crore' + (num%10000000 ? ' '+conv(num%10000000) : '');
+      if (num < 20) return ones[num];
+      if (num < 100) return tensW[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '');
+      if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' ' + conv(num % 100) : '');
+      if (num < 100000) return conv(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 ? ' ' + conv(num % 1000) : '');
+      if (num < 10000000) return conv(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 ? ' ' + conv(num % 100000) : '');
+      return conv(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 ? ' ' + conv(num % 10000000) : '');
     };
     return conv(Math.abs(Math.round(n)));
   };
 
   // ─── Exact Tailwind → inline style map ────────────────────────────────────
-  const FONT  = "'Arial', 'Helvetica Neue', Helvetica, sans-serif";
+  const FONT = "'Arial', 'Helvetica Neue', Helvetica, sans-serif";
   const BLACK = '#000000';
-  const BLUE100  = '#dbeafe';  // bg-blue-100
-  const BLUE900  = '#1e3a8a';  // bg-blue-900
-  const GRAY600  = '#4b5563';  // text-gray-600
-  const BLUE700  = '#1d4ed8';  // text-blue-700
-  const WHITE    = '#ffffff';
+  const BLUE100 = '#dbeafe';  // bg-blue-100
+  const BLUE900 = '#1e3a8a';  // bg-blue-900
+  const GRAY600 = '#4b5563';  // text-gray-600
+  const BLUE700 = '#1d4ed8';  // text-blue-700
+  const WHITE = '#ffffff';
 
   // border shorthand
   const B = `1px solid ${BLACK}`;
@@ -425,9 +426,9 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
               {supplier.logo
                 ? <img alt="Logo" src={supplier.logo} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                 : /* text-white text-xs font-bold text-center leading-tight */
-                  <span style={{ color: WHITE, fontSize: '12px', fontWeight: 700, textAlign: 'center', lineHeight: 1.25 }}>
-                    {(supplier.name || supplier.companyName || 'MAYDIV INFOTECH').split(' ').slice(0,2).join('\n').split('\n').map((w,i) => <span key={i} style={{ display: 'block' }}>{w}</span>)}
-                  </span>
+                <span style={{ color: WHITE, fontSize: '12px', fontWeight: 700, textAlign: 'center', lineHeight: 1.25 }}>
+                  {(supplier.name || supplier.companyName || 'MAYDIV INFOTECH').split(' ').slice(0, 2).join('\n').split('\n').map((w, i) => <span key={i} style={{ display: 'block' }}>{w}</span>)}
+                </span>
               }
             </div>
           </div>
@@ -473,8 +474,8 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
         <div style={{ borderBottom: B }}>
           {[
             ['Invoice Number', invoice.invoiceNumber || invoice.number],
-            ['Invoice Date',   formatDate(invoice.date)],
-            ['State',          (supplier.state || '').toUpperCase()],
+            ['Invoice Date', formatDate(invoice.date)],
+            ['State', (supplier.state || '').toUpperCase()],
             ['Reverse Charge', 'NO'],
           ].map(([label, value], i, arr) => (
             <div key={label} style={{
@@ -517,14 +518,14 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
               <th style={{ border: B, padding: '4px', width: '32px', fontWeight: 700 }}>QTY</th>
               <th style={{ border: B, padding: '4px', width: '32px', fontWeight: 700 }}>Unit</th>
               <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>Rate</th>
-              <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>Taxable<br/>Value</th>
+              <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>Taxable<br />Value</th>
               {showIGST && <>
-                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>IGST<br/>Rate</th>
-                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>IGST<br/>Amount</th>
+                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>IGST<br />Rate</th>
+                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>IGST<br />Amount</th>
               </>}
               {showSGST && <>
-                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>SGST<br/>Rate</th>
-                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>SGST<br/>Amount</th>
+                <th style={{ border: B, padding: '4px', width: '40px', fontWeight: 700 }}>SGST<br />Rate</th>
+                <th style={{ border: B, padding: '4px', width: '56px', fontWeight: 700 }}>SGST<br />Amount</th>
               </>}
               <th style={{ border: B, padding: '4px', width: '64px', fontWeight: 700 }}>Total</th>
             </tr>
@@ -535,7 +536,7 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
                 <td style={{ border: B, padding: '4px', textAlign: 'center' }}>{i + 1}</td>
                 <td style={{ border: B, padding: '4px', textAlign: 'left' }}>
                   <span style={{ fontWeight: 700 }}>{p.name}</span>
-                  {p.description && <><br/><span style={{ fontSize: '12px' }}>{p.description}</span></>}
+                  {p.description && <><br /><span style={{ fontSize: '12px' }}>{p.description}</span></>}
                 </td>
                 <td style={{ border: B, padding: '4px', textAlign: 'center' }}>{p.hsn}</td>
                 <td style={{ border: B, padding: '4px', textAlign: 'center' }}>{qty}</td>
@@ -547,7 +548,7 @@ const InvoiceDocumentDynamic = ({ invoice }) => {
                   <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(gstAmount)}</td>
                 </>}
                 {showSGST && <>
-                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{(gstRate/2).toFixed(2)}%</td>
+                  <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{(gstRate / 2).toFixed(2)}%</td>
                   <td style={{ border: B, padding: '4px', textAlign: 'right' }}>{fmt(sgst)}</td>
                 </>}
                 <td style={{ border: B, padding: '4px', textAlign: 'right' }}>₹ {fmt(amount + gstAmount)}</td>
@@ -721,7 +722,7 @@ export const generatePDF = async (invoice) => {
     console.log('Starting PDF generation with invoice:', invoice);
 
     // A4 Portrait at 96 DPI: 210mm × 297mm
-    const A4_WIDTH_PX  = 794;
+    const A4_WIDTH_PX = 794;
     const A4_HEIGHT_PX = 1123;
 
     const tempContainer = document.createElement('div');
@@ -740,7 +741,7 @@ export const generatePDF = async (invoice) => {
 
     await new Promise((resolve) => {
       ReactDOM.render(
-        invoice.type === 'proforma-invoice' || invoice.invoiceType === 'proforma-invoice' 
+        invoice.type === 'proforma-invoice' || invoice.invoiceType === 'proforma-invoice'
           ? <ProformaDocumentDynamic invoice={invoice} />
           : <InvoiceDocumentDynamic invoice={invoice} />,
         tempContainer,
@@ -756,9 +757,9 @@ export const generatePDF = async (invoice) => {
       useCORS: true,
       logging: false,
       backgroundColor: 'white',
-      width:        A4_WIDTH_PX,
-      height:       A4_HEIGHT_PX,
-      windowWidth:  A4_WIDTH_PX,
+      width: A4_WIDTH_PX,
+      height: A4_HEIGHT_PX,
+      windowWidth: A4_WIDTH_PX,
       windowHeight: A4_HEIGHT_PX,
     });
 
