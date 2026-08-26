@@ -162,6 +162,8 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                     <th className="border border-black p-2 text-center bg-gray-100">IGST Amount</th>
                   </>}
                   {showSGST && <>
+                    <th className="border border-black p-2 text-center bg-gray-100">CGST Rate</th>
+                    <th className="border border-black p-2 text-center bg-gray-100">CGST Amount</th>
                     <th className="border border-black p-2 text-center bg-gray-100">SGST Rate</th>
                     <th className="border border-black p-2 text-center bg-gray-100">SGST Amount</th>
                   </>}
@@ -205,6 +207,8 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                       {showSGST && <>
                         <td className="border border-black p-2 text-center">{(gstRate / 2).toFixed(2)}%</td>
                         <td className="border border-black p-2 text-center">₹ {(gstAmount / 2).toFixed(2)}</td>
+                        <td className="border border-black p-2 text-center">{(gstRate / 2).toFixed(2)}%</td>
+                        <td className="border border-black p-2 text-center">₹ {(gstAmount / 2).toFixed(2)}</td>
                       </>}
                       <td className="border border-black p-2 text-center font-bold">₹ {itemTotal.toFixed(2)}</td>
                     </tr>
@@ -212,7 +216,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 })}
                 {/* Total Row */}
                 <tr>
-                  <td colSpan={2 + (showIGST ? 2 : 0) + (showSGST ? 2 : 0)} className="border border-black p-2 text-right font-bold">Grand Total</td>
+                  <td colSpan={2 + (showIGST ? 2 : 0) + (showSGST ? 4 : 0)} className="border border-black p-2 text-right font-bold">Grand Total</td>
                   <td className="border border-black p-2 text-center font-bold text-lg">₹ {finalInvoiceAmount.toFixed(2)}</td>
                 </tr>
               </tbody>
