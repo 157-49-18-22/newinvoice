@@ -25,7 +25,9 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
     products = [],
     supplierData = {},
     gstType = 'auto',
-    discountPercent = 0
+    discountPercent = 0,
+    tdsEnabled = false,
+    tdsPercent = 0
   } = data || {};
 
   const isInterState = supplierData?.state !== buyerDataToUse?.state;
@@ -94,7 +96,9 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
   const discountAmount = totalWithTax * (safeCalculate(discountPercent) / 100);
   const grandTotal = totalWithTax - discountAmount;
   const roundOffValue = Math.round(grandTotal) - grandTotal;
-  const finalInvoiceAmount = Math.round(grandTotal);
+  const afterRoundOff = Math.round(grandTotal);
+  const tdsAmount = tdsEnabled ? afterRoundOff * (safeCalculate(tdsPercent) / 100) : 0;
+  const finalInvoiceAmount = afterRoundOff - tdsAmount;
 
   if (data?.invoiceType === 'proforma-invoice') {
     return (
@@ -541,6 +545,12 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
                 <div className="w-3/5 p-1 border-r border-black text-left flex items-center">Round Off Value</div>
                 <div className="w-2/5 p-1 text-right flex items-center justify-end">₹ {roundOffValue > 0 ? '+' : ''}{roundOffValue.toFixed(2)}</div>
               </div>
+              {tdsEnabled && tdsPercent > 0 && (
+                <div className="flex border-b border-black flex-grow" style={{ background: '#fff3cd' }}>
+                  <div className="w-3/5 p-1 border-r border-black text-left flex items-center">Less: TDS ({tdsPercent}%)</div>
+                  <div className="w-2/5 p-1 text-right flex items-center justify-end">-₹ {tdsAmount.toFixed(2)}</div>
+                </div>
+              )}
               <div className="flex border-b border-black bg-invoice-blue flex-grow">
                 <div className="w-3/5 p-1 border-r border-black text-left flex items-center">Final Invoice Amount</div>
                 <div className="w-2/5 p-1 text-right flex items-center justify-end">₹ {finalInvoiceAmount.toFixed(2)}</div>
