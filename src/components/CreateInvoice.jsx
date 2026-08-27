@@ -106,6 +106,8 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
 
   const [invoiceProducts, setInvoiceProducts] = useState(initialInvoiceData?.products || []);
   const [discountPercent, setDiscountPercent] = useState(initialInvoiceData?.discountPercent || 0);
+  const [tdsEnabled, setTdsEnabled] = useState(initialInvoiceData?.tdsEnabled || false);
+  const [tdsPercent, setTdsPercent] = useState(initialInvoiceData?.tdsPercent || 2);
 
   // Other existing state...
   const [showSupplierDetails, setShowSupplierDetails] = useState(false);
@@ -163,6 +165,8 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       setInvoicePrefix(prefix);
       setInvoiceNumber(num);
       setDiscountPercent(initialInvoiceData.discountPercent || 0);
+      setTdsEnabled(initialInvoiceData.tdsEnabled || false);
+      setTdsPercent(initialInvoiceData.tdsPercent || 2);
     } else {
       // Reset state if initialInvoiceData becomes null (e.g., switching from edit to new)
       console.log('[CreateInvoice Effect] Initial data is null, resetting state.');
@@ -177,6 +181,8 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       setInvoiceNumber('');
       setInvoiceProducts([]);
       setDiscountPercent(0);
+      setTdsEnabled(false);
+      setTdsPercent(2);
     }
   }, [initialInvoiceData]); // Depend on the prop
 
@@ -313,6 +319,11 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       stateCode: selectedBuyer.stateCode || '06' // Default state code if not provided
     } : {};
 
+    // TDS calculation
+    const parsedTdsPercent = tdsEnabled ? parseFloat(tdsPercent) || 0 : 0;
+    const tdsAmount = finalAmount * (parsedTdsPercent / 100);
+    const amountAfterTds = finalAmount - tdsAmount;
+
     const invoiceData = {
       // Include the id if we are editing
       id: invoiceId,
@@ -321,8 +332,10 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       invoiceNumber: invoiceNumber, // Keep individual number for reference
       invoicePrefix: invoicePrefix, // Keep individual prefix for reference
       date: invoiceDate,
-      amount: finalAmount, // Use recalculated amount after discount
+      amount: amountAfterTds, // Use final amount after discount and TDS
       discountPercent: discountPercent,
+      tdsEnabled: tdsEnabled,
+      tdsPercent: tdsEnabled ? parsedTdsPercent : 0,
       supplierData: supplierData || {},
       selectedBuyer: buyerData, // Keep for backward compatibility
       buyerData, // This is what InvoiceTemplate expects
@@ -900,6 +913,47 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                 placeholder="Enter discount (%)"
               />
             </div>
+          </div>
+        </section>
+
+        <section className="form-section">
+          <div className="section-header">
+            <h2>TDS Details ( Optional )</h2>
+          </div>
+          <div className="detail-row" style={{ alignItems: 'center', gap: '16px' }}>
+            <div className="detail-field" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexDirection: 'row', flex: 'none' }}>
+              <input
+                type="checkbox"
+                id="tdsEnabled"
+                checked={tdsEnabled}
+                onChange={(e) => setTdsEnabled(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <label htmlFor="tdsEnabled" style={{ marginBottom: 0, cursor: 'pointer', fontWeight: 600 }}>
+                Enable TDS Deduction
+              </label>
+            </div>
+            {tdsEnabled && (
+              <div className="detail-field">
+                <label>TDS Rate</label>
+                <select
+                  value={tdsPercent}
+                  onChange={(e) => setTdsPercent(parseFloat(e.target.value))}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    background: '#fff',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value={2}>2% - (194C / 194J etc.)</option>
+                  <option value={10}>10% - (194J Professional / Royalty)</option>
+                </select>
+              </div>
+            )}
           </div>
         </section>
 
