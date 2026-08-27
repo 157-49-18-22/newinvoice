@@ -315,6 +315,8 @@
     const products = invoice?.products || [];
     const bankData = invoice?.bankData || {};
     const discountPercent = parseFloat(invoice?.discountPercent || 0);
+    const tdsEnabled = invoice?.tdsEnabled || false;
+    const tdsRate = parseFloat(invoice?.tdsPercent || 0);
 
     // GST logic
     const isInterState = supplier?.state !== buyer?.state;
@@ -355,7 +357,9 @@
     const discountAmount = totalWithTax * (discountPercent / 100);
     const grandTotal = totalWithTax - discountAmount;
     const roundOff = Math.round(grandTotal) - grandTotal;
-    const finalAmount = Math.round(grandTotal);
+    const afterRoundOff = Math.round(grandTotal);
+    const tdsAmount = tdsEnabled ? afterRoundOff * (tdsRate / 100) : 0;
+    const finalAmount = afterRoundOff - tdsAmount;
 
     // en-IN locale formatting (e.g. 1,23,456.00)
     const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -673,6 +677,12 @@
                   <span style={{ flex: 1, padding: '4px' }}>Round Off Value</span>
                   <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {roundOff.toFixed(2)}</span>
                 </div>
+                {tdsEnabled && tdsRate > 0 && (
+                  <div style={{ display: 'flex', borderBottom: B, background: '#fff3cd' }}>
+                    <span style={{ flex: 1, padding: '4px' }}>Less: TDS ({tdsRate}%)</span>
+                    <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>-₹ {fmt(tdsAmount)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', borderBottom: B }}>
                   <span style={{ flex: 1, padding: '4px', fontWeight: 700 }}>Final Invoice Amount</span>
                   <span style={{ width: '96px', padding: '4px', textAlign: 'right', fontWeight: 700 }}>₹ {fmt(finalAmount)}</span>
