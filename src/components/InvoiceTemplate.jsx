@@ -253,7 +253,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
             <p className="font-bold mb-16">For {supplierData?.name || supplierData?.companyName || 'MAYDIV INFOTECH'}</p>
             {data.includeSignature && data.signatureImage && (
               <div className="mb-2" style={{ marginTop: '-60px' }}>
-                <img src={data.signatureImage} alt="Signature" style={{ maxHeight: '60px' }} />
+                <img src={data.signatureImage} alt="Signature" style={{ maxHeight: '90px' }} />
               </div>
             )}
             <p>Authorized Signatory</p>
@@ -575,7 +575,7 @@ const InvoiceTemplate = forwardRef(({ data = {}, bankData = null, forPDF = false
               </div>
               {data.includeSignature && data.signatureImage && (
                 <div className="flex justify-center items-center my-2">
-                  <img src={data.signatureImage} alt="Signature" style={{ maxHeight: '60px' }} />
+                  <img src={data.signatureImage} alt="Signature" style={{ maxHeight: '90px' }} />
                 </div>
               )}
               <div className="border-t border-black w-2/3 mx-auto mt-16 pt-1">
