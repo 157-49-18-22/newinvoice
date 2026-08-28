@@ -1,9 +1,9 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 const SignatureCanvas = ({ onSave }) => {
   const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [context, setContext] = useState(null);
+  const isDrawing = useRef(false);
+  const contextRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -15,51 +15,70 @@ const SignatureCanvas = ({ onSave }) => {
     
     // Set drawing style
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5; // Slightly thicker for a smoother signature
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    setContext(ctx);
+    contextRef.current = ctx;
+
+    // Prevent scrolling when touching the canvas to avoid interruptions
+    const preventScroll = (e) => {
+      e.preventDefault();
+    };
+    
+    canvas.addEventListener('touchstart', preventScroll, { passive: false });
+    canvas.addEventListener('touchmove', preventScroll, { passive: false });
+    
+    return () => {
+      canvas.removeEventListener('touchstart', preventScroll);
+      canvas.removeEventListener('touchmove', preventScroll);
+    };
   }, []);
 
-  const startDrawing = (e) => {
-    const { offsetX, offsetY } = getCoordinates(e);
-    context.beginPath();
-    context.moveTo(offsetX, offsetY);
-    setIsDrawing(true);
-  };
-
-  const draw = (e) => {
-    if (!isDrawing) return;
-    const { offsetX, offsetY } = getCoordinates(e);
-    context.lineTo(offsetX, offsetY);
-    context.stroke();
-  };
-
-  const stopDrawing = () => {
-    if (isDrawing) {
-      context.closePath();
-      setIsDrawing(false);
-    }
-  };
-
   const getCoordinates = (e) => {
-    if (e.touches && e.touches[0]) {
-      const rect = canvasRef.current.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    
+    if (e.touches && e.touches.length > 0) {
       return {
         offsetX: e.touches[0].clientX - rect.left,
         offsetY: e.touches[0].clientY - rect.top
       };
     }
+    
+    const clientX = e.clientX !== undefined ? e.clientX : e.nativeEvent?.clientX;
+    const clientY = e.clientY !== undefined ? e.clientY : e.nativeEvent?.clientY;
+
     return {
-      offsetX: e.nativeEvent.offsetX,
-      offsetY: e.nativeEvent.offsetY
+      offsetX: clientX - rect.left,
+      offsetY: clientY - rect.top
     };
+  };
+
+  const startDrawing = (e) => {
+    const { offsetX, offsetY } = getCoordinates(e);
+    contextRef.current.beginPath();
+    contextRef.current.moveTo(offsetX, offsetY);
+    isDrawing.current = true;
+  };
+
+  const draw = (e) => {
+    if (!isDrawing.current) return;
+    const { offsetX, offsetY } = getCoordinates(e);
+    contextRef.current.lineTo(offsetX, offsetY);
+    contextRef.current.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (isDrawing.current) {
+      contextRef.current.closePath();
+      isDrawing.current = false;
+    }
   };
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    contextRef.current.clearRect(0, 0, canvas.width, canvas.height);
   };
 
   const saveSignature = () => {
