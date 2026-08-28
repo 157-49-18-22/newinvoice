@@ -137,7 +137,6 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   });
   // eslint-disable-next-line
   const fileInputRef = useRef(null);
-  const [includeSignature, setIncludeSignature] = useState(initialInvoiceData?.includeSignature || false);
   // eslint-disable-next-line
   const canvasRef = useRef(null);
   const [editingBuyer, setEditingBuyer] = useState(null);
@@ -166,7 +165,6 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       setSupplierData(initialInvoiceData.supplierData || null);
       setInvoiceDate(initialInvoiceData.date || new Date().toISOString().split('T')[0]);
       setInvoiceProducts(initialInvoiceData.products || []);
-      setIncludeSignature(initialInvoiceData.includeSignature || false);
       setSignatureImage(initialInvoiceData.signatureImage || null);
 
       const invNo = initialInvoiceData.invoiceNo || '';
