@@ -8,6 +8,7 @@ import ProductDetails from './ProductDetails';
 import TransportationDetails from './TransportationDetails';
 import OtherDetails from './OtherDetails';
 import BankDetails from './BankDetails';
+import SignatureCanvas from './SignatureCanvas';
 
 // LocalStorage Keys
 const BUYERS_STORAGE_KEY = 'invoiceApp_allBuyers';
@@ -121,9 +122,19 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   // State for signature and editing
   // eslint-disable-next-line
   const invoiceTemplateRef = useRef(null);
-  const [showSignature, setShowSignature] = useState(initialInvoiceData?.includeSignature || false);
+  const [showSignature, setShowSignature] = useState(() => {
+    if (initialInvoiceData?.includeSignature !== undefined) return initialInvoiceData.includeSignature;
+    return loadFromLocalStorage('savedShowSignature', false);
+  });
   const [signatureType, setSignatureType] = useState('upload');
-  const [signatureImage, setSignatureImage] = useState(initialInvoiceData?.signatureImage || null);
+  const [signatureImage, setSignatureImage] = useState(() => {
+    if (initialInvoiceData?.signatureImage) return initialInvoiceData.signatureImage;
+    try {
+      return localStorage.getItem('savedSignatureImage') || null;
+    } catch (e) {
+      return null;
+    }
+  });
   // eslint-disable-next-line
   const fileInputRef = useRef(null);
   const [includeSignature, setIncludeSignature] = useState(initialInvoiceData?.includeSignature || false);
@@ -203,6 +214,15 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       console.error('Error saving products to localStorage:', error);
     }
   }, [allProducts]);
+
+  // Save showSignature toggle whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('savedShowSignature', JSON.stringify(showSignature));
+    } catch (error) {
+      console.error('Error saving showSignature to localStorage:', error);
+    }
+  }, [showSignature]);
 
   const handleSupplierSave = (data) => {
     setSupplierData(data);
@@ -345,8 +365,8 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
       transportData: transportData || {},
       otherData: otherData || {},
       bankData: bankData || {},
-      includeSignature: includeSignature || false,
-      signatureImage: includeSignature ? signatureImage : null
+      includeSignature: showSignature || false,
+      signatureImage: showSignature ? signatureImage : null
     };
     console.log('Saving invoice with invoiceNumber:', invoiceNumber); // Debug log
     console.log('About to call onSave with data:', invoiceData); // Debug log
@@ -367,7 +387,10 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => setSignatureImage(e.target.result);
+      reader.onload = (e) => {
+        setSignatureImage(e.target.result);
+        try { localStorage.setItem('savedSignatureImage', e.target.result); } catch (err) {}
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -376,10 +399,12 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
   const handleSignatureSave = (dataUrl) => {
     setSignatureImage(dataUrl);
     setSignatureType('upload');
+    try { localStorage.setItem('savedSignatureImage', dataUrl); } catch (err) {}
   };
 
   const handleDeleteSignature = () => {
     setSignatureImage(null);
+    try { localStorage.removeItem('savedSignatureImage'); } catch (err) {}
   };
 
   const handleInvoiceNumberChange = (e) => {
@@ -1116,7 +1141,12 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                 <div className="signature-type-selector">
                   <button
                     className={`type-button ${signatureType === 'upload' ? 'active' : ''}`}
-                    onClick={() => setSignatureType('upload')}
+                    onClick={() => {
+                      setSignatureType('upload');
+                      if (!signatureImage && fileInputRef.current) {
+                        fileInputRef.current.click();
+                      }
+                    }}
                   >
                     Upload Signature
                   </button>
@@ -1128,6 +1158,14 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                   </button>
                 </div>
 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleSignatureUpload}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+
                 {signatureType === 'upload' && (
                   <div className="signature-upload">
                     {signatureImage ? (
@@ -1138,22 +1176,26 @@ const CreateInvoice = ({ onClose, onSave, initialInvoiceData = null }) => {
                         </button>
                       </div>
                     ) : (
-                      <div className="upload-area" onClick={() => fileInputRef.current.click()}>
+                      <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
                         <span>Click to upload signature image</span>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleSignatureUpload}
-                          accept="image/*"
-                          style={{ display: 'none' }}
-                        />
                       </div>
                     )}
                   </div>
                 )}
 
                 {signatureType === 'draw' && (
-                  null
+                  <div className="signature-draw-container">
+                    {signatureImage ? (
+                      <div className="signature-preview">
+                        <img src={signatureImage} alt="Signature" />
+                        <button className="delete-signature" onClick={handleDeleteSignature}>
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <SignatureCanvas onSave={handleSignatureSave} />
+                    )}
+                  </div>
                 )}
               </div>
             )}
